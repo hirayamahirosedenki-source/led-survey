@@ -117,6 +117,8 @@ label.f { display: flex; flex-direction: column; gap: 3px; font-size: .8rem; col
 .seg button { min-height: 36px; padding: 4px 10px; font-size: .85rem; border-radius: 99px; font-weight: 600; }
 .seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .chips { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+.chips.wrap { flex-wrap: wrap; overflow-x: visible; max-height: 40vh; overflow-y: auto; }
+.findmode button { flex: 1 1 0; }
 .chip { flex: none; min-height: 48px; padding: 4px 10px; border-radius: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 0; font-weight: 600; }
 .chip small { font-weight: 400; color: var(--muted); font-size: .72rem; max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
@@ -131,6 +133,8 @@ details > summary::before { content: "▸"; margin-right: 8px; color: var(--mute
 details[open] > summary::before { content: "▾"; }
 .secthead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 
+.totop { position: fixed; right: 12px; bottom: calc(16px + var(--sab)); z-index: 7; min-height: 48px; padding: 8px 14px; border-radius: 24px; background: var(--accent); color: #fff; border-color: var(--accent); box-shadow: 0 4px 14px rgba(0,0,0,.25); font-weight: 700; }
+.totop.above { bottom: calc(84px + var(--sab)); }
 .savebar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 6; background: var(--surface); border-top: 1px solid var(--line); padding: 8px 12px calc(8px + var(--sab)); }
 .savebar .in { max-width: 40rem; margin: 0 auto; display: flex; gap: 8px; }
 .savebar .in > .primary { flex: 1 1 auto; }
@@ -150,7 +154,75 @@ details[open] > summary::before { content: "▾"; }
 
 /* Overlays (built into the page because alert/confirm are blocked in the Claude frame). */
 .ov { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; }
-.sheet { background: var(--surface); color: var(--ink); width: 100%; max-width: 40rem; max-height: 92vh; overflow: auto; border-radius: 16px 16px 0 0; padding: 16px 14px calc(16px + var(--sab)); display: flex; flex-direction: column; gap: 12px; }
+/* iPhoneで長い確認画面が下までスクロールできないことへの対策：中身を縮めずに、画面の中だけでスクロールさせる */
+.sheet > * { flex-shrink: 0; }
+.sheet { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+html.ovopen, html.ovopen body { overflow: hidden; }
+.sheet { background: var(--surface); color: var(--ink); width: 100%; max-width: 40rem; max-height: 92vh; max-height: 92dvh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 16px 14px calc(16px + var(--sab)); display: flex; flex-direction: column; gap: 12px; }
+.cgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.ctile { display: flex; flex-direction: column; border: 2px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; min-width: 0; }
+.ctile.done { border-color: var(--ok-ink); }
+.ctile.todo { border-color: var(--warn-ink); }
+.ctile.over { border-color: var(--danger); }
+.ctap { display: flex; align-items: center; gap: 6px; padding: 8px 10px; border: 0; border-radius: 0; background: none; min-height: 64px; width: 100%; justify-content: space-between; font-weight: 700; }
+.ctap.hit { background: var(--accent-soft); }
+.ctap, .cbar button { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.ctap .csym { font-family: var(--font-mono); font-size: 1.5rem; font-weight: 800; color: var(--accent); min-width: 2.2em; text-align: left; overflow-wrap: anywhere; }
+.cinfo img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; border: 1px solid var(--line); flex: none; }
+.cinfo .cnoimg { width: 40px; height: 40px; border-radius: 6px; background: var(--line); color: var(--muted); font-size: .65rem; display: flex; align-items: center; justify-content: center; flex: none; font-weight: 400; }
+.ctap .ccnt { font-family: var(--font-mono); font-size: 1.35rem; font-weight: 800; white-space: nowrap; flex: none; }
+.cinfo { display: flex; gap: 6px; align-items: center; padding: 0 8px 6px; font-size: .78rem; min-width: 0; }
+.cinfo .ctx { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.cinfo .ck { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cinfo .cm { font-family: var(--font-mono); overflow-wrap: anywhere; }
+.cbar { display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
+.cbar button { border: 0; border-radius: 0; min-height: 40px; background: none; font-weight: 700; }
+.cbar button + button { border-left: 1px solid var(--line); }
+.nextstep { display: flex; flex-direction: column; gap: 8px; border-color: var(--accent); }
+.nextstep.slim { padding: 8px 12px; gap: 6px; font-size: .9rem; }
+.nextstep h2 { margin: 0; font-size: 1.05rem; }
+.symfilter { display: flex; flex-direction: column; gap: 6px; }
+.symheads { display: flex; flex-direction: column; gap: 6px; }
+.symheads .letters { display: flex; flex-wrap: wrap; gap: 4px; }
+.symheads .letters button { min-width: 2.6rem; min-height: 40px; padding: 4px 6px; font-family: var(--font-mono); font-weight: 700; }
+.symheads .letters button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.kpad { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; background: var(--surface); border-top: 2px solid var(--accent); box-shadow: 0 -6px 24px rgba(0,0,0,.25); padding: 10px 10px calc(10px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 6px; }
+.kpad .kpv { flex: 1 1 auto; font-family: var(--font-mono); font-size: 1.8rem; font-weight: 800; color: var(--accent); overflow-wrap: anywhere; }
+.kpad .kpv.fresh { background: var(--accent-soft); border-radius: 6px; padding: 0 6px; }
+.kpad .kgrid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.kpad .kgrid button { min-height: 44px; padding: 0; font-size: 1.1rem; font-weight: 700; }
+.kpad button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); }
+.chipsel { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.chipsel button { min-height: 40px; padding: 6px 12px; font-weight: 600; }
+.chipsel button[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+.hchips button { min-width: 3.2rem; padding: 6px 8px; font-family: var(--font-mono); }
+.f:has(.chipsel) { grid-column: 1 / -1; }
+.f[hidden] { display: none !important; }
+#v-survey.single .levelbar, #v-survey.single .sticky > .row, #v-survey.single #s-topinfo, #v-survey.single > .grid2, #v-survey.single .tabs, #v-survey.single #s-dw { display: none !important; }
+#e-single:not([hidden]) { border-color: var(--accent); }
+.report { position: fixed; inset: 0; z-index: 55; background: #fff; color: #111; overflow-y: auto; padding: 12px 14px 40px; -webkit-overflow-scrolling: touch; }
+html.reporting, html.reporting body { overflow: hidden; }
+.rbar { position: sticky; top: -12px; display: flex; gap: 8px; padding: 8px 0; background: #fff; z-index: 2; }
+.rbody { max-width: 46rem; margin: 0 auto; font-size: 14px; line-height: 1.55; }
+.rbody h1 { font-size: 20px; text-align: center; margin: 8px 0 12px; letter-spacing: .1em; }
+.rbody h2 { font-size: 16px; margin: 0 0 6px; border-left: 5px solid #0b5c8a; padding-left: 8px; }
+.rhead, .rtbl { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+.rhead th, .rhead td, .rtbl th, .rtbl td { border: 1px solid #999; padding: 4px 8px; text-align: left; vertical-align: top; }
+.rhead th, .rtbl th { width: 9.5em; background: #eef2f5; font-weight: 600; white-space: nowrap; }
+.ritem { margin: 16px 0 20px; break-inside: avoid; page-break-inside: avoid; }
+.rpics { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rpics figure { margin: 0; }
+.rpics img { width: 100%; height: 190px; object-fit: contain; background: #f2f2f2; border: 1px solid #ccc; }
+.rpics figcaption { font-size: 12px; color: #555; text-align: center; }
+.rfoot { text-align: right; color: #666; font-size: 12px; }
+@media print {
+  html.reporting body > *:not(.report) { display: none !important; }
+  html.reporting, html.reporting body { overflow: visible !important; }
+  .report { position: static; overflow: visible; padding: 0; }
+  .noprint { display: none !important; }
+  @page { size: A4; margin: 14mm; }
+}
+.bigsym { font-family: var(--font-mono); font-size: 4rem; font-weight: 800; text-align: center; color: var(--accent); line-height: 1.1; }
 .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .keypad button { min-height: 58px; font-size: 1.5rem; font-weight: 700; font-family: var(--font-mono); }
 .qtydisp { text-align: center; font-family: var(--font-mono); font-size: 2.6rem; font-weight: 800; min-height: 64px; border: 2px solid var(--accent); border-radius: 12px; display: flex; align-items: center; justify-content: center; background: var(--bg); }
@@ -203,16 +275,20 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
     <label class="f" for="h-name">マンション名（これだけで開始できます）
       <input type="text" id="h-name" placeholder="例：○○マンション" autocomplete="off" enterkeyhint="go">
     </label>
-    <button type="button" class="primary big" id="h-start">調査を開始</button>
+    <button type="button" class="primary big" id="h-start">マンションの一括調査を開始</button>
+    <button type="button" class="big" id="h-start1">単発調査を開始（1台〜数台・不具合／交換）</button>
     <div class="status err" id="h-err" hidden role="alert"></div>
   </div>
   <div class="group-h"><h3>保存済みの案件</h3><span class="note" id="h-count"></span></div>
   <div id="h-list"></div>
   <div class="card">
     <h2>バックアップから戻す</h2>
-    <p class="note">このアプリで書き出したバックアップ（.zip）を読み込みます。写真も戻ります。</p>
+    <p class="note">このアプリで書き出したバックアップ（.zip）を読み込みます。写真も戻ります。LAN DISK Xに保存したZIPが使えるかは「中身を確かめる」で、この端末のデータを変えずに確認できます。</p>
     <input type="file" id="h-restore-file" class="visually-hidden" accept=".zip,application/zip">
     <label class="btn" for="h-restore-file">バックアップを選ぶ</label>
+    <input type="file" id="h-verify-file" class="visually-hidden" accept=".zip,application/zip">
+    <label class="btn" for="h-verify-file">中身を確かめる（データは変えない）</label>
+    <div class="status" id="h-verify-msg" hidden role="status"></div>
     <button type="button" id="h-cloud-restore" hidden>クラウドから読み込み直す（Claude環境）</button>
     <div class="status" id="h-restore-msg" hidden role="status"></div>
   </div>
@@ -224,6 +300,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
     <div class="topbar">
       <span class="title" id="s-title"></span>
       <button type="button" class="small" id="s-home" aria-label="案件一覧へ">案件一覧</button>
+      <button type="button" class="small" id="s-dw">図面</button>
       <button type="button" class="small" id="s-menu">案件設定</button>
     </div>
     <div class="levelbar">
@@ -244,8 +321,11 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
     <button type="button" class="big" id="s-photo">📷 写真だけ登録</button>
   </div>
   <input type="file" id="s-photo-file" class="visually-hidden" accept="image/*" multiple>
+  <input type="file" id="dw-pdf" class="visually-hidden" accept="application/pdf,.pdf,image/*" multiple>
+  <input type="file" id="dw-cam" class="visually-hidden" accept="image/*" capture="environment">
   <div class="tabs" role="tablist">
-    <button type="button" role="tab" data-tab="level" aria-selected="true">この階</button>
+    <button type="button" role="tab" data-tab="count" aria-selected="true">数える</button>
+    <button type="button" role="tab" data-tab="level" aria-selected="false">この階</button>
     <button type="button" role="tab" data-tab="all" aria-selected="false">全体</button>
     <button type="button" role="tab" data-tab="fixtures" aria-selected="false">器具記号</button>
     <button type="button" role="tab" data-tab="sum" aria-selected="false">集計・出力</button>
@@ -260,6 +340,8 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
     <button type="button" class="small" id="e-back">戻る</button>
   </div>
 
+  <div class="card" id="e-single" hidden></div>
+
   <div class="card" data-sec="rec">
     <div class="grid2">
       <label class="f" for="e-level">階
@@ -273,10 +355,11 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
 
   <div class="card">
     <div class="secthead"><h2>器具記号</h2><span class="note">Goodnotesと同じ記号</span></div>
-    <div class="chips" id="e-chips"></div>
+    <div id="e-find"></div>
+    <div class="chips wrap" id="e-chips"></div>
     <div class="grid2">
       <label class="f" for="e-symbol">器具記号
-        <input type="text" id="e-symbol" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false" style="font-size:1.3rem">
+        <input type="text" id="e-symbol" class="mono" autocomplete="off" autocapitalize="off" spellcheck="false" style="font-size:1.3rem">
       </label>
       <label class="f" for="e-kind">器具種類
         <select id="e-kind"></select>
@@ -295,6 +378,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
       <label class="btn" for="e-pick">写真を選ぶ</label>
     </div>
     <div class="thumbs" id="e-photos"></div>
+    <div id="e-other" hidden><h3 style="margin:8px 0 4px">この記号の写真（ほかの場所で撮影）</h3><div class="thumbs" id="e-ophotos"></div></div>
     <p class="note">写真は追加した時点で端末内に保存されます。写真をタップすると種類の変更、型番の読み取り、削除ができます。</p>
     <div class="status" id="e-ai" hidden role="status"></div>
     <div id="e-aires"></div>
@@ -307,7 +391,9 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
       <label class="f" for="e-maker">メーカー<select id="e-maker"></select></label>
       <label class="f" for="e-watt">消費電力（W）<input type="text" id="e-watt" autocomplete="off" inputmode="decimal"></label>
     </div>
-    <label class="f" for="e-model">器具型番<input type="text" id="e-model" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+    <label class="f" for="e-dmodel">図面の型番（姿図・器具表）<input type="text" id="e-dmodel" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+    <label class="f" for="e-model">器具型番（現地の銘板）<input type="text" id="e-model" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+    <div class="row" id="e-dwrap" hidden><button type="button" class="small" id="e-dsame">図面の型番と同じ</button><span class="pill bad" id="e-ddiff" hidden>図面と相違</span></div>
     <button type="button" id="e-past">過去の記録から型番を探す（圏外でも使えます）</button>
     <div id="e-pastres" style="display:flex;flex-direction:column;gap:8px"></div>
     <label class="f" for="e-lamp">ランプ型番<input type="text" id="e-lamp" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
@@ -353,6 +439,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
       <label class="f" for="e-mh">取付高さ(m)<input type="text" id="e-mh" inputmode="decimal" autocomplete="off"></label>
       <label class="f" for="e-hm">高さの確認<select id="e-hm"></select></label>
     </div>
+    <label class="f" for="e-space">天井内の有効高さ(mm)<input type="text" id="e-space" inputmode="numeric" autocomplete="off" placeholder="例：200"></label>
     <div class="grid2">
       <label class="f" for="e-mount">取付方式<select id="e-mount"></select></label>
       <label class="f" for="e-diff">交換難易度<select id="e-diff"></select></label>
@@ -360,7 +447,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
     <div class="f">必要な機材<div class="checks" id="e-access"></div></div>
     <div class="grid2">
       <label class="f" for="e-plate">リニューアルプレート<select id="e-plate"></select></label>
-      <label class="f" for="e-reuse">既設開口・取付跡の利用<select id="e-reuse"></select></label>
+      <label class="f" for="e-reuse" hidden>既設開口・取付跡の利用<select id="e-reuse"></select></label>
       <label class="f" for="e-repair">天井・壁面の補修<select id="e-repair"></select></label>
       <label class="f" for="e-wet">防水・防湿条件<select id="e-wet"></select></label>
     </div>
@@ -460,12 +547,13 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
 <datalist id="cctlist"></datalist>
 <datalist id="voltlist"></datalist>
 <div id="overlay" class="ov" hidden></div>
+<button type="button" id="totop" class="totop" aria-label="いちばん上に戻る" hidden>▲ 上へ</button>
 <div id="toast" class="toast" hidden role="status"></div>
 
 <script>
 (function () {
 'use strict';
-var APP_VER = '1.1.15';
+var APP_VER = '1.1.32';
 
 /* ====================================================================
    定数
@@ -498,7 +586,7 @@ var KINDS = [
   { id: 'emergency', name: '非常用照明', dims: ['cutout', 'depth', 'outer'], mount: '', cat: 'emergency' },
   { id: 'other', name: 'その他', dims: ['outer', 'cutout', 'cutoutWD', 'depth', 'pitch'], mount: '' }
 ];
-var DIMS = { outer: '外形寸法（W×D×H mm）', cutout: '埋込穴径（φmm）', cutoutWD: '埋込寸法（W×D mm）', depth: '埋込深さ（mm）', pitch: '取付ピッチ（mm）' };
+var DIMS = { outer: '仕上り外径（丸はφ、四角はW×D mm）', cutout: '開口（φmm）', cutoutWD: '開口（W×D mm）', depth: '埋込深さ（mm）', pitch: '取付ピッチ（mm）' };
 var CAT = { general: '一般照明', exit: '誘導灯', emergency: '非常用照明' };
 var PHOTO_KINDS = ['器具全体', '銘板', 'ランプ', '取付状況', '寸法確認', '仕様書', 'その他'];
 var CCT_METHODS = ['目視', '銘板', '仕様書', '未確認'];
@@ -731,7 +819,7 @@ async function getMeta(key) { var r = await dbGet('meta', key); return r ? r.val
    ==================================================================== */
 var S = {
   projects: [], p: null, fixtures: [], records: [], photos: [],
-  tab: 'level', allFilter: '', settings: { endpoint: '', cloud: false, places: [] }, urls: {}, storeOk: false
+  tab: window.__ledTestTab || 'count', allFilter: '', settings: { endpoint: '', cloud: false, places: [] }, urls: {}, storeOk: false
 };
 
 function fxById(id) { return S.fixtures.find(function (f) { return f.id === id; }) || null; }
@@ -878,7 +966,7 @@ async function renderHome() {
     var c = counts[p.id] || { n: 0, q: 0 };
     list.append(h('button', { type: 'button', class: 'item', onclick: function () { openProject(p.id); } },
       h('div', { class: 'body' },
-        h('span', { class: 't', text: p.name }),
+        h('span', { class: 't', text: (p.type === 'single' ? '【単発】' : '') + p.name }),
         h('span', { class: 's', text: '記録 ' + c.n + '件・器具 ' + c.q + '台・最上階 ' + (p.topFloor ? p.topFloor + '階' : '未設定') }),
         h('span', { class: 's', text: '更新 ' + stamp(p.updatedAt) + '・前回 ' + lvLabel(p.current && p.current.level) + (p.current && p.current.place ? ' ' + p.current.place : '') })
       ),
@@ -887,20 +975,22 @@ async function renderHome() {
   });
   box.append(list);
 }
-async function startProject() {
+async function startProject(type) {
+  type = type === 'single' ? 'single' : '';
   var name = $('h-name').value.trim(), err = $('h-err');
   err.hidden = true;
-  if (!name) { err.textContent = 'マンション名を入力してください。'; err.hidden = false; $('h-name').focus(); return; }
+  if (!name) { err.textContent = 'マンション名（物件名）を入力してください。'; err.hidden = false; $('h-name').focus(); return; }
   if (!S.storeOk) { err.textContent = '端末内に保存できないため、調査を開始できません。「設定・環境」で原因を確認してください。'; err.hidden = false; return; }
   var now = Date.now();
   var p = { id: uid('p'), name: name, topFloor: null, basements: 0, penthouses: 0, current: { level: 'R', place: '' }, createdAt: now, updatedAt: now };
+  if (type) { p.type = 'single'; p.topFloor = 1; p.current = { level: 'F1', place: '' }; p.single = { date: new Date().toISOString().slice(0, 10) }; }
   $('h-start').disabled = true;
   try {
     await saveVerified([['put', 'projects', p], ['put', 'meta', { key: 'last', value: p.id }]]);
     $('h-name').value = '';
     await loadProjects();
     await openProject(p.id);
-    toast('「' + name + '」の調査を開始しました。屋上から記録できます。');
+    toast(type ? '「' + name + '」の単発調査を開始しました。「＋ 不具合の調査」か「＋ 交換の調査」を押してください。' : '「' + name + '」の調査を開始しました。屋上から記録できます。');
   } catch (e) {
     err.textContent = '保存できませんでした：' + errText(e); err.hidden = false;
   } finally { $('h-start').disabled = false; }
@@ -919,7 +1009,7 @@ async function openProject(pid) {
     if (!p.current) p.current = { level: 'R', place: '' };
     try { await setMeta('last', pid); } catch (e) {}
     if (cloudReady()) writeCloudSettings();
-    S.tab = 'level';
+    S.tab = window.__ledTestTab || 'count';
     renderSurvey(); show('survey');
     var d = await getMeta('draft').catch(function () { return null; });
     if (!(d && d.projectId === pid)) d = await cloudDraftRead(pid);
@@ -961,7 +1051,7 @@ function onPlaceInput() {
   placeTimer = setTimeout(function () {
     var v = $('s-place').value.trim();
     if (v === (S.p.current.place || '')) return;
-    saveProject({ current: { level: S.p.current.level, place: v } }).then(function (ok) { if (ok) renderPlaces(); });
+    saveProject({ current: { level: S.p.current.level, place: v } }).then(function (ok) { if (ok) { renderPlaces(); if (S.tab === 'count') renderSurvey(); } });
   }, 500);
 }
 
@@ -979,7 +1069,7 @@ async function saveMyPlaces(list) {
 function placeSheet(editing) {
   var cur = $('s-place').value.trim();
   var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '設置場所を選ぶ' }, h('h2', { text: '設置場所を選ぶ' }));
-  function pick(v) { closeOverlay(); $('s-place').value = v; savePlaceNow(); toast('場所：' + v); }
+  function pick(v) { closeOverlay(); $('s-place').value = v; savePlaceNow().then(function () { if (S.tab === 'count') renderSurvey(); }); toast('場所：' + v); }
   function group(title, list) {
     if (!list.length) return;
     var g = h('div', { class: 'seg' });
@@ -1041,7 +1131,11 @@ function renderSurvey() {
   document.querySelectorAll('.tabs [data-tab]').forEach(function (b) { b.setAttribute('aria-selected', String(b.dataset.tab === S.tab)); });
   renderPlaces();
   var body = $('s-body'); body.replaceChildren();
-  if (S.tab === 'level') body.append(renderLevelTab());
+  $('v-survey').classList.toggle('single', isSingle());
+  if (isSingle()) { body.append(renderSingle()); return; }
+  if (S.tab === 'count' || S.tab === 'level') { var ns = nextStepCard(); if (ns) body.append(ns); }
+  if (S.tab === 'count') body.append(renderCountTab());
+  else if (S.tab === 'level') body.append(renderLevelTab());
   else if (S.tab === 'all') body.append(renderAllTab());
   else if (S.tab === 'fixtures') body.append(renderFixturesTab());
   else body.append(renderSumTab());
@@ -1056,6 +1150,8 @@ function recordRow(r) {
   var unc = fx && [fx.model, fx.lamp, fx.ballast].some(hasQ);
   var side = h('div', { class: 'side' },
     fx ? h('button', { type: 'button', class: 'qtybtn', 'aria-label': '数量を変更', text: '×' + (r.qty || 0), onclick: function () { quickQty({ fixtureId: fx.id, recordId: r.id }); } }) : h('span', { class: 'pill w', text: '未整理' }),
+    countPill(r),
+    fxDiff(fx) ? h('span', { class: 'pill bad', text: '図面と相違' }) : null,
     unc ? h('span', { class: 'pill bad', text: '要確認' }) : null,
     fx && fx.needLookup ? h('span', { class: 'pill w', text: '帰社後に調べる' }) : null
   );
@@ -1065,7 +1161,7 @@ function recordRow(r) {
       h('span', { class: 't', text: fx ? (kindName(fx.kind) || '種類未入力') : '写真のみ（あとで詳細を入力）' }),
       fx && fx.model ? h('span', { class: 'm', text: fx.model }) : null,
       h('span', { class: 's', text: [r.place || '（場所未入力）'].concat(flags).join(' · ') + (ph.length ? '　📷' + ph.length : '') }),
-      ph.length ? h('div', { class: 'mini' }, ph.slice(0, 4).map(function (x) { return thumbImg(x); })) : null
+      ph.length ? h('div', { class: 'mini' }, ph.slice(0, 4).map(function (x) { return thumbImg(x); })) : (fx && fxThumbPhoto(fx.id) ? h('div', { class: 'mini', style: 'align-items:center' }, thumbImg(fxThumbPhoto(fx.id)), h('span', { class: 's', text: '見本（ほかの場所の写真）' })) : null)
     ),
     side
   );
@@ -1086,6 +1182,16 @@ function renderLevelTab() {
   wrap.append(h('div', { class: 'group-h' }, h('h3', { text: lvLabel(lv) + 'の記録' }), h('span', { class: 'note', text: recs.length + '件・' + q + '台' })));
   // 最後の階など「次の階」が押せない階でも、Goodnotes と照合できるようにする
   if (recs.length) wrap.append(h('button', { type: 'button', text: 'この階を確認（Goodnotesと照合）', onclick: function () { leaveFloor(null); } }));
+  var unplanned = recs.filter(function (r) { return r.fixtureId && !isPlanned(r); });
+  if (unplanned.length) wrap.append(h('button', { type: 'button', text: '先に入れた数を「予定」にする（回って確認する）', onclick: async function () {
+    var c = await ask(lvLabel(lv) + 'の記録 ' + unplanned.length + ' 件を「予定」にします。現地で「数える」を押すか「予定どおり」を押すと確認済みになります。', [{ label: '予定にする', value: 'y', cls: 'primary' }, { label: 'やめる', value: null }]);
+    if (c !== 'y') return;
+    var now = Date.now(), ops = unplanned.map(function (r) { return ['put', 'records', Object.assign({}, r, { plan: Number(r.qty) || 0, cnt: null, updatedAt: now })]; });
+    ops.push(['put', 'projects', Object.assign({}, S.p, { updatedAt: now })]);
+    try { await saveVerified(ops); } catch (e) { toast('保存できませんでした：' + errText(e), true); return; }
+    ops.forEach(function (o) { if (o[1] === 'records') replaceIn(S.records, o[2]); else S.p = o[2]; });
+    S.tab = 'count'; renderSurvey(); scheduleCloud(S.p.id); toast(unplanned.length + ' 件を予定にしました。場所を選んで数えてください');
+  } }));
   var src = copySourceLevel();
   if (src) wrap.append(h('button', { type: 'button', class: recs.length ? '' : 'primary', text: recs.length ? '別の階の構成をコピー' : '前の階（' + lvLabel(src) + '）と同じ構成をコピー', onclick: function () { copyFloorSheet(src); } }));
   if (!recs.length) { wrap.append(h('div', { class: 'empty', text: 'この階の記録はまだありません。「＋ 器具を記録」か「📷 写真だけ登録」から始めます。' })); return wrap; }
@@ -1096,10 +1202,13 @@ function renderLevelTab() {
   });
   return wrap;
 }
-var COPY_FIELDS = ['ceilH', 'mountH', 'hMethod', 'mount', 'difficulty', 'access', 'plate', 'reuse', 'repair', 'wet'];
+var COPY_FIELDS = ['ceilH', 'mountH', 'ceilSpace', 'hMethod', 'mount', 'difficulty', 'access', 'plate', 'reuse', 'repair', 'wet'];
+// 基本的に使わない項目は、最初から「不要」を選んでおく（必要なときだけ押して変える）
+var REC_DEFAULTS = { plate: '不要', repair: '不要' };
 function copyConditions(rec, src, fx) {
   if (src) COPY_FIELDS.forEach(function (k) { rec[k] = Array.isArray(src[k]) ? src[k].slice() : (src[k] || (k === 'access' ? [] : '')); });
   else if (fx) { var k = kindOf(fx.kind); if (k && k.mount) rec.mount = k.mount; }
+  Object.keys(REC_DEFAULTS).forEach(function (k) { if (!rec[k]) rec[k] = REC_DEFAULTS[k]; });
   return rec;
 }
 /* 二度押し防止：保存中にもう一度押されても無視する */
@@ -1138,10 +1247,11 @@ function quickQty(o) {
     var n = parseInt(val, 10);
     if (!(n >= 1)) { toast('数量を1以上で入れてください', true); return; }
     var now = Date.now(), ops = [], r;
-    if (rec) r = Object.assign({}, rec, { qty: n, updatedAt: now });
+    // 数字で入れた数は「この数で正しい」と決めた数なので、予定があれば予定も同じ数にして確認済み（✓）にする
+    if (rec) r = Object.assign({}, rec, { qty: n, cnt: n, updatedAt: now }, rec.plan != null ? { plan: n } : {});
     else {
       r = copyConditions(blankRecord(), src && src.fixtureId === fx.id ? src : null, fx);
-      r.fixtureId = fx.id; r.qty = n; r.level = level; r.place = place; r.status = 'ok'; r.createdAt = now; r.updatedAt = now;
+      r.fixtureId = fx.id; r.qty = n; r.cnt = n; r.plan = null; r.level = level; r.place = place; r.status = 'ok'; r.createdAt = now; r.updatedAt = now;
     }
     ops.push(['put', 'records', r]);
     var np = Object.assign({}, S.p, { updatedAt: now });
@@ -1156,10 +1266,273 @@ function quickQty(o) {
     h('div', { class: 'row' }, h('span', { class: 'sym', text: fx.symbol }), h('div', { class: 'grow' },
       h('h2', { text: (kindName(fx.kind) || '種類未入力') + (fx.model ? '　' + fx.model : '') }),
       h('p', { class: 'note', text: lvLabel(level) + (place ? '　' + place : '　（設置場所なし）') + (rec ? 'の数量を変更' : 'に追加') }))),
+    fxThumbPhoto(fx.id) ? h('button', { type: 'button', class: 'thumb', style: 'width:auto;flex-direction:row;gap:8px', onclick: function () { openFull(fxThumbPhoto(fx.id).id); } }, thumbImg(fxThumbPhoto(fx.id)), h('span', { text: 'この記号の写真（押すと大きく）' })) : null,
     !rec && !place ? h('div', { class: 'status err', text: '設置場所が空です。閉じて「候補」から場所を選ぶと、場所ごとに集計できます。' }) : null,
     disp, pad, extra,
     h('button', { type: 'button', class: 'primary big', text: '保存', onclick: once(save) }),
     h('button', { type: 'button', text: '詳しく入力（写真・施工条件など）', onclick: function () { closeOverlay(); if (rec) openEditor({ recordId: rec.id }); else openEditor({ fixtureId: fx.id, copyFrom: src && src.id }); } }));
+  overlay(sh);
+}
+/* ---------- 数える画面（1台ごとに1回押す） ----------
+   記録の数の持ち方：
+   - qty  … 正式な数（集計・CSVに使う）
+   - plan … 先に入れた予定数（階のコピーや「予定にする」で付く）。null なら予定なし
+   - cnt  … 現地で数えた数。予定ありで cnt が null なら「未確認」
+   予定ありの記録は、数え始めると qty = cnt になる。 */
+function fxDiff(f) { return !!(f && f.drawingModel && f.model && modelKey(f.drawingModel) !== modelKey(f.model)); }
+function isPlanned(r) { return r && r.plan != null; }
+function recDone(r) { return !isPlanned(r) || r.cnt === r.plan; }
+function countLabel(r) {
+  if (!isPlanned(r)) return '確認済';
+  if (r.cnt == null) return '未確認';
+  return r.cnt === r.plan ? '確認済' : '予定と違う（確認 ' + r.cnt + '）';
+}
+function countPill(r) {
+  if (!isPlanned(r) || !r.fixtureId) return null;
+  if (r.cnt == null) return h('span', { class: 'pill w', text: '未確認（予定' + r.plan + '）' });
+  if (r.cnt === r.plan) return h('span', { class: 'pill ok', text: '✓ 確認済' });
+  return h('span', { class: 'pill bad', text: '確認 ' + r.cnt + ' / 予定 ' + r.plan });
+}
+function updateDiffVis() {
+  var d = norm($('e-dmodel').value), m = norm($('e-model').value);
+  $('e-dwrap').hidden = !d;
+  $('e-dsame').hidden = !d || modelKey(d) === modelKey(m);
+  $('e-ddiff').hidden = !(d && m && modelKey(d) !== modelKey(m));
+}
+function fxThumbPhoto(fid) {
+  var ph = photosOfFixture(fid);
+  if (!ph.length) return null;
+  var order = ['器具全体', '銘板', '仕様書'];
+  return ph.slice().sort(function (a, b) {
+    var ia = order.indexOf(a.kind), ib = order.indexOf(b.kind);
+    return (ia < 0 ? 9 : ia) - (ib < 0 ? 9 : ib) || a.createdAt - b.createdAt;
+  })[0];
+}
+function recAt(fid, level, place) {
+  return S.records.find(function (r) { return r.fixtureId === fid && r.level === level && (r.place || '') === (place || ''); }) || null;
+}
+function condSource(fid, level) {
+  var same = S.records.filter(function (r) { return r.fixtureId === fid && r.level === level; }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); })[0];
+  return same || lastRecordOf(fid);
+}
+var countQ = Promise.resolve();
+function countChange(fid, d) {
+  // 速く続けて押しても、1回ずつ順番に保存する（数が飛ばないように）
+  countQ = countQ.then(function () { return doCount(fid, d); }).catch(function (e) { toast('保存できませんでした：' + errText(e), true); });
+  return countQ;
+}
+async function doCount(fid, d) {
+  var fx = fxById(fid); if (!fx) return;
+  var lv = S.p.current.level, place = currentPlace(), now = Date.now();
+  var rec = recAt(fid, lv, place), ops = [], r = null, del = false;
+  if (d > 0) {
+    if (!rec) {
+      r = copyConditions(blankRecord(), condSource(fid, lv), fx);
+      r.fixtureId = fid; r.level = lv; r.place = place; r.qty = 1; r.cnt = 1; r.plan = null; r.status = 'ok'; r.createdAt = now; r.updatedAt = now;
+    } else {
+      var c = isPlanned(rec) ? (rec.cnt == null ? 0 : rec.cnt) : (Number(rec.qty) || 0);
+      r = Object.assign({}, rec, { cnt: c + 1, qty: c + 1, updatedAt: now });
+    }
+  } else {
+    if (!rec) return;
+    if (isPlanned(rec)) {
+      if (rec.cnt == null) return;
+      r = rec.cnt <= 1 ? Object.assign({}, rec, { cnt: null, qty: rec.plan, updatedAt: now }) : Object.assign({}, rec, { cnt: rec.cnt - 1, qty: rec.cnt - 1, updatedAt: now });
+    } else if ((Number(rec.qty) || 0) <= 1) {
+      if (photosOfRecord(rec.id).length) { toast('写真付きの記録なので0台にはできません。「この階」タブで記録を開いて削除してください', true); return; }
+      del = true;
+    } else r = Object.assign({}, rec, { qty: rec.qty - 1, cnt: rec.qty - 1, updatedAt: now });
+  }
+  if (del) ops.push(['del', 'records', rec.id]); else ops.push(['put', 'records', r]);
+  var np = Object.assign({}, S.p, { updatedAt: now, current: { level: lv, place: place } });
+  ops.push(['put', 'projects', np]);
+  await saveVerified(ops);
+  if (del) S.records = S.records.filter(function (x) { return x.id !== rec.id; }); else replaceIn(S.records, r);
+  S.p = np;
+  if (S.tab === 'count' && $('v-survey') && !$('v-survey').hidden) renderSurvey();
+  scheduleCloud(S.p.id);
+  if (!del && r.qty === 1 && !rec) toast(fx.symbol + ' をこの場所に追加しました（' + lvLabel(lv) + (place ? ' ' + place : '') + '）');
+}
+async function confirmPlanned(recs) {
+  var now = Date.now(), ops = [], done = [];
+  recs.forEach(function (r) { if (isPlanned(r) && r.cnt !== r.plan) { var n = Object.assign({}, r, { cnt: r.plan, qty: r.plan, updatedAt: now }); ops.push(['put', 'records', n]); done.push(n); } });
+  if (!ops.length) return 0;
+  ops.push(['put', 'projects', Object.assign({}, S.p, { updatedAt: now })]);
+  try { await saveVerified(ops); } catch (e) { toast('保存できませんでした：' + errText(e), true); return -1; }
+  done.forEach(function (n) { replaceIn(S.records, n); }); S.p = ops[ops.length - 1][2];
+  scheduleCloud(S.p.id);
+  return done.length;
+}
+function renderCountTab() {
+  var wrap = h('div', { style: 'display:flex;flex-direction:column;gap:10px' });
+  var lv = S.p.current.level, place = currentPlace();
+  if (!place) {
+    wrap.append(h('div', { class: 'status err', text: '設置場所を選んでから数えてください。数えた台数は、今選んでいる場所に入ります。' }),
+      h('button', { type: 'button', class: 'primary big', text: '設置場所を選ぶ', onclick: function () { placeSheet(false); } }));
+    return wrap;
+  }
+  var fxs = sortedFixtures();
+  if (!fxs.length) { wrap.append(h('div', { class: 'empty', text: 'まだ器具記号がありません。「器具記号」タブでまとめて登録するか、「＋ 器具を記録」で最初の器具を登録してください。' })); return wrap; }
+  var here = S.records.filter(function (r) { return r.fixtureId && r.level === lv && (r.place || '') === place; });
+  var planned = here.filter(isPlanned), done = planned.filter(recDone);
+  var total = here.reduce(function (s, r) { return s + (Number(r.qty) || 0); }, 0);
+  wrap.append(h('div', { class: 'group-h' }, h('h3', { text: lvLabel(lv) + '　' + place }),
+    h('span', { class: 'note', text: total + '台' + (planned.length ? '・確認 ' + done.length + '/' + planned.length + '記号' : '') })));
+  if (planned.length && done.length < planned.length) {
+    wrap.append(h('button', { type: 'button', text: 'この場所は予定どおり（全部 ✓ にする）', onclick: once(async function () {
+      var n = await confirmPlanned(planned); if (n > 0) { renderSurvey(); toast(place + 'の ' + n + ' 記号を予定どおりで確認済みにしました'); }
+    }) }));
+  }
+  function tile(f) {
+    var r = recAt(f.id, lv, place), ph = fxThumbPhoto(f.id);
+    var cntTxt, cls = 'ctile';
+    if (r && isPlanned(r)) { cntTxt = (r.cnt == null ? 0 : r.cnt) + ' / ' + r.plan; cls += r.cnt === r.plan ? ' done' : (r.cnt == null ? ' todo' : (r.cnt > r.plan ? ' over' : ' todo')); }
+    else if (r) { cntTxt = String(r.qty || 0); cls += ' done'; }
+    else cntTxt = '0';
+    var tap = h('button', { type: 'button', class: 'ctap', 'aria-label': f.symbol + ' を1台数える（今 ' + cntTxt + '）', onclick: function () { tap.classList.add('hit'); setTimeout(function () { tap.classList.remove('hit'); }, 150); countChange(f.id, 1); } },
+      h('span', { class: 'csym', text: f.symbol }),
+      h('span', { class: 'ccnt', text: cntTxt + (r && recDone(r) && isPlanned(r) ? ' ✓' : '') }));
+    var info = h('div', { class: 'cinfo' },
+      ph ? thumbImg(ph) : h('span', { class: 'cnoimg', text: '写真なし' }),
+      h('div', { class: 'ctx' },
+        h('span', { class: 'ck', text: kindName(f.kind) || '種類未入力' }),
+        h('span', { class: 'cm', text: f.model || (f.drawingModel ? '図面 ' + f.drawingModel : '型番未入力') }),
+        fxDiff(f) ? h('span', { class: 'pill bad', text: '図面と相違' }) : null));
+    var bar = h('div', { class: 'cbar' },
+      h('button', { type: 'button', 'aria-label': f.symbol + ' を1台減らす', text: '−1', disabled: !r || (isPlanned(r) && r.cnt == null), onclick: function () { countChange(f.id, -1); } }),
+      h('button', { type: 'button', 'aria-label': f.symbol + ' のメニュー', text: '…', onclick: function () { countMenu(f.id); } }));
+    return h('div', { class: cls }, tap, info, bar);
+  }
+  // 記号が多いときは探す欄と頭文字ボタンを出す。使っていない記号はたたむ
+  var grids = h('div', { style: 'display:flex;flex-direction:column;gap:10px' });
+  function drawGrids() {
+    grids.replaceChildren();
+    var fl = symFilterOn(), list = fxs.filter(fxMatches);
+    var atHere = list.filter(function (f) { return here.some(function (r) { return r.fixtureId === f.id; }); });
+    var onLevel = list.filter(function (f) { return atHere.indexOf(f) < 0 && S.records.some(function (r) { return r.fixtureId === f.id && r.level === lv; }); });
+    var rest = list.filter(function (f) { return atHere.indexOf(f) < 0 && onLevel.indexOf(f) < 0; });
+    if (fl && !list.length) grids.append(h('div', { class: 'empty', text: '合う記号がありません。「絞り込みを消す」で全部に戻ります。' }));
+    if (atHere.length) grids.append(h('div', { class: 'cgrid' }, atHere.map(tile)));
+    if (onLevel.length) grids.append(h('h3', { text: 'この階のほかの場所の記号' }), h('div', { class: 'cgrid' }, onLevel.map(tile)));
+    if (rest.length) {
+      var fold = !fl && (atHere.length || onLevel.length) && rest.length > 4 && !S.restOpen;
+      if (fold) grids.append(h('button', { type: 'button', text: 'そのほかの記号（' + rest.length + '）を開く', onclick: function () { S.restOpen = true; drawGrids(); } }));
+      else grids.append(h('h3', { text: atHere.length || onLevel.length ? 'そのほかの記号' : '記号' }), h('div', { class: 'cgrid' }, rest.map(tile)));
+    }
+  }
+  if (fxs.length >= 8) wrap.append(symFilterBar(drawGrids, newFxWithModel));
+  drawGrids();
+  wrap.append(grids);
+  wrap.append(h('p', { class: 'note', text: '器具を1台見るごとに記号を1回押します（数え間違いは −1）。型番が違う器具は「…」→「ここだけ型番が違う」。初めての器具は「＋ 器具を記録」で写真と型番を入れます。' }));
+  return wrap;
+}
+function countMenu(fid) {
+  var f = fxById(fid); if (!f) return;
+  var lv = S.p.current.level, place = currentPlace(), r = recAt(fid, lv, place), ph = fxThumbPhoto(fid);
+  var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': f.symbol + ' のメニュー' },
+    h('div', { class: 'row' }, h('span', { class: 'sym', text: f.symbol }), h('div', { class: 'grow' },
+      h('h2', { text: (kindName(f.kind) || '種類未入力') }),
+      h('p', { class: 'note', text: '現地 ' + (f.model || '未入力') + (f.drawingModel ? '／図面 ' + f.drawingModel : '') + '　' + lvLabel(lv) + ' ' + place }))));
+  if (fxDiff(f)) sh.append(h('div', { class: 'status err', text: '図面の型番と現地の型番が違います。' }));
+  if (r && isPlanned(r) && r.cnt !== r.plan) sh.append(h('button', { type: 'button', class: 'primary', text: '予定どおり ' + r.plan + '台（✓）', onclick: once(async function () {
+    var n = await confirmPlanned([r]); if (n > 0) { closeOverlay(); renderSurvey(); toast(f.symbol + ' を予定どおり ' + r.plan + '台で確認済みにしました'); }
+  }) }));
+  sh.append(h('button', { type: 'button', class: r ? '' : 'primary', text: 'ここだけ型番が違う（新しい記号を作る）', onclick: once(function () { return makeVariant(fid); }) }));
+  if (f.drawingModel && !f.model) sh.append(h('button', { type: 'button', text: '現地の型番は図面どおり（' + f.drawingModel + '）', onclick: once(async function () {
+    var nf = Object.assign({}, f, { model: f.drawingModel, updatedAt: Date.now() });
+    try { await saveVerified([['put', 'fixtures', nf]]); } catch (e) { toast('保存できませんでした：' + errText(e), true); return; }
+    replaceIn(S.fixtures, nf); closeOverlay(); renderSurvey(); scheduleCloud(S.p.id); toast(f.symbol + ' の型番を図面どおり ' + nf.model + ' にしました');
+  }) }));
+  if (ph) sh.append(h('button', { type: 'button', text: '写真を見る（見比べる）', onclick: function () { closeOverlay(); photoViewer(ph.id); } }));
+  if (!r || (isPlanned(r) && r.cnt == null)) sh.append(h('button', { type: 'button', text: r ? '予定数を直す（数える前）' : '予定数を入れる（数える前）', onclick: function () { closeOverlay(); planSheet(fid); } }));
+  sh.append(h('button', { type: 'button', text: r && isPlanned(r) && r.cnt !== r.plan ? '数を数字で入れる（入れた数で ✓）' : '数を数字で入れる', onclick: function () { closeOverlay(); quickQty(r ? { fixtureId: fid, recordId: r.id } : { fixtureId: fid, copyFrom: (condSource(fid, lv) || {}).id }); } }));
+  if (r) sh.append(h('button', { type: 'button', text: 'この場所の記録を開く（写真・施工条件）', onclick: function () { closeOverlay(); openEditor({ recordId: r.id }); } }));
+  sh.append(h('button', { type: 'button', text: '器具情報（型番・仕様）', onclick: function () { closeOverlay(); openEditor({ fixtureOnly: fid }); } }),
+    h('button', { type: 'button', text: '閉じる', onclick: closeOverlay }));
+  overlay(sh);
+}
+/* 数える前に予定数を入れる・直す（まだ1回も数えていない記号だけ）。数え始めたら「数を数字で入れる」で直す */
+function planSheet(fid) {
+  var fx = fxById(fid); if (!fx) return;
+  var lv = S.p.current.level, place = currentPlace(), rec = recAt(fid, lv, place);
+  if (rec && !(isPlanned(rec) && rec.cnt == null)) { toast('数え始めた記号は「数を数字で入れる」で直してください', true); return; }
+  var val = rec ? String(rec.plan) : '';
+  var disp = h('div', { class: 'qtydisp', 'aria-live': 'polite' });
+  function show() { disp.textContent = val || '予定数を押してください'; disp.classList.toggle('empty', !val); }
+  var pad = h('div', { class: 'keypad' });
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'C', '0', '⌫'].forEach(function (k) {
+    pad.append(h('button', { type: 'button', 'aria-label': k === 'C' ? '消す' : (k === '⌫' ? '1文字消す' : k), text: k, onclick: function () {
+      if (k === 'C') val = ''; else if (k === '⌫') val = val.slice(0, -1); else if (val.length < 4) val = (val === '0' ? '' : val) + k; show();
+    } }));
+  });
+  async function save() {
+    var n = parseInt(val, 10) || 0, now = Date.now(), ops = [], r = null, del = false;
+    if (!n) {
+      if (!rec) { closeOverlay(); return; }
+      if (photosOfRecord(rec.id).length) { toast('写真付きの記録なので0台にはできません', true); return; }
+      del = true; ops.push(['del', 'records', rec.id]);
+    } else if (rec) { r = Object.assign({}, rec, { plan: n, qty: n, cnt: null, updatedAt: now }); ops.push(['put', 'records', r]); }
+    else {
+      r = copyConditions(blankRecord(), condSource(fid, lv), fx);
+      r.fixtureId = fid; r.level = lv; r.place = place; r.qty = n; r.plan = n; r.cnt = null; r.status = 'ok'; r.createdAt = now; r.updatedAt = now;
+      ops.push(['put', 'records', r]);
+    }
+    var np = Object.assign({}, S.p, { updatedAt: now }); ops.push(['put', 'projects', np]);
+    try { await saveVerified(ops); } catch (e) { toast('保存できませんでした：' + errText(e), true); return; }
+    if (del) S.records = S.records.filter(function (x) { return x.id !== rec.id; }); else replaceIn(S.records, r);
+    S.p = np; closeOverlay(); renderSurvey(); scheduleCloud(S.p.id);
+    toast(del ? fx.symbol + ' の予定を消しました' : fx.symbol + ' の予定を ' + n + '台にしました。数えると「0 / ' + n + '」から増えます');
+  }
+  var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '予定数' },
+    h('h2', { text: fx.symbol + ' の予定数（数える前）' }),
+    h('p', { class: 'note', text: lvLabel(lv) + ' ' + place + '　予定は「たぶん何台あるか」の数です。数えると「0 / 予定」から増え、予定まで数えると ✓ になります。0 にすると予定を消します。' }),
+    disp, pad,
+    h('button', { type: 'button', class: 'primary big', text: '予定数を保存', onclick: once(save) }));
+  show(); overlay(sh);
+}
+/* 同じ記号で一部の場所だけ型番が違う器具：A → A-2 を作り、この場所に1台入れる */
+function variantSymbol(base) {
+  // かっこ付きは、かっこの中に付ける：(A) → (A-2)、(A321) → (A321-2)。かっこなしは A → A-2
+  var used = {}; S.fixtures.forEach(function (f) { used[f.symbol] = 1; });
+  var m = /^\((.*)\)$/.exec(base);
+  for (var i = 2; i < 100; i++) { var c = m ? '(' + m[1] + '-' + i + ')' : base + '-' + i; if (!used[c]) return c; }
+  return '';
+}
+async function makeVariant(fid) {
+  var f = fxById(fid); if (!f) return;
+  var base = f.variantOf && fxById(f.variantOf) ? fxById(f.variantOf) : f;
+  var sym = variantSymbol(base.symbol);
+  if (!sym) { toast('記号を作れませんでした', true); return; }
+  var lv = S.p.current.level, place = currentPlace(), now = Date.now(), ops = [];
+  var nf = { id: uid('fx'), projectId: S.p.id, symbol: sym, kind: base.kind, maker: base.maker, model: '', drawingModel: base.drawingModel || base.model || '',
+    lamp: '', ballast: '', battery: '', batterySpec: '', source: '', output: '', cct: '', cctMethod: '', watt: '', volt: base.volt || '',
+    dims: JSON.parse(JSON.stringify(base.dims || {})), ambience: !!base.ambience, needLookup: false, highCri: false,
+    memo: base.symbol + ' と同じ記号で型番違い（図面は ' + base.symbol + '）', spec: '', cands: [], variantOf: base.id, createdAt: now, updatedAt: now };
+  ops.push(['put', 'fixtures', nf]);
+  var r = copyConditions(blankRecord(), recAt(f.id, lv, place) || condSource(f.id, lv), nf);
+  r.fixtureId = nf.id; r.level = lv; r.place = place; r.qty = 1; r.cnt = 1; r.plan = null; r.status = 'ok'; r.createdAt = now; r.updatedAt = now;
+  ops.push(['put', 'records', r]);
+  // 予定に入っていた元の記号の1台が、型番違いだったので予定から1台減らす
+  var orig = recAt(f.id, lv, place), origNew = null, origDel = false;
+  if (orig && isPlanned(orig) && orig.plan > 0) {
+    if (orig.plan > 1) { origNew = Object.assign({}, orig, { plan: orig.plan - 1, updatedAt: now }); if (origNew.cnt == null) origNew.qty = origNew.plan; ops.push(['put', 'records', origNew]); }
+    else if (orig.cnt == null && !photosOfRecord(orig.id).length) { origDel = true; ops.push(['del', 'records', orig.id]); }
+  }
+  var np = Object.assign({}, S.p, { updatedAt: now, current: { level: lv, place: place } });
+  ops.push(['put', 'projects', np]);
+  try { await saveVerified(ops); } catch (e) { toast('保存できませんでした：' + errText(e), true); return; }
+  S.fixtures.push(nf); S.records.push(r); S.p = np;
+  if (origNew) replaceIn(S.records, origNew);
+  if (origDel) S.records = S.records.filter(function (x) { return x.id !== orig.id; });
+  scheduleCloud(S.p.id);
+  closeOverlay();
+  var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '型番違いの記号を作りました' },
+    h('p', { class: 'note', text: 'iPad係に伝えてください' }),
+    h('div', { class: 'bigsym', text: sym }),
+    h('p', { text: lvLabel(lv) + ' ' + place + ' の ' + base.symbol + ' のうち1台は型番違い → ' + sym + '（この場所に1台入れました）' }),
+    origNew || origDel ? h('p', { class: 'note', text: base.symbol + ' の予定数を1台減らしました。' }) : null,
+    h('button', { type: 'button', class: 'primary big', text: '銘板を撮って型番を入れる', onclick: function () { closeOverlay(); openEditor({ recordId: r.id, pkind: '銘板' }); setSpecFold(false); } }),
+    h('button', { type: 'button', text: 'あとで入れる（数え続ける）', onclick: function () { closeOverlay(); renderSurvey(); } }));
   overlay(sh);
 }
 /* ---------- 別の階の構成をコピー ---------- */
@@ -1202,21 +1575,21 @@ function copyFloorSheet(srcLevel) {
     ids.forEach(function (id, i) {
       var src = recById(id), f = fxById(src.fixtureId);
       var r = copyConditions(blankRecord(), src, f);
-      r.fixtureId = src.fixtureId; r.qty = src.qty; r.place = src.place || ''; r.level = cur; r.status = 'ok'; r.createdAt = now + i; r.updatedAt = now + i;
+      r.fixtureId = src.fixtureId; r.qty = src.qty; r.plan = Number(src.qty) || 0; r.cnt = null; r.place = src.place || ''; r.level = cur; r.status = 'ok'; r.createdAt = now + i; r.updatedAt = now + i;
       ops.push(['put', 'records', r]); made.push(r);
     });
     var np = Object.assign({}, S.p, { updatedAt: now });
     ops.push(['put', 'projects', np]);
     try { await saveVerified(ops); } catch (e) { toast('コピーできませんでした：' + errText(e), true); return; }
     made.forEach(function (r) { S.records.push(r); }); S.p = np;
-    closeOverlay(); S.tab = 'level'; renderSurvey(); scheduleCloud(S.p.id);
-    toast(made.length + '件をコピーしました。数が違うところは「×数」を押して直してください');
+    closeOverlay(); S.tab = 'count'; renderSurvey(); scheduleCloud(S.p.id);
+    toast(made.length + '件を予定としてコピーしました。回りながら「数える」で確認してください');
   }
   var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '別の階の構成をコピー' },
     h('h2', { text: lvLabel(cur) + 'に、別の階の構成をコピー' }),
     h('label', { class: 'f' }, 'コピー元の階', sel),
     already ? h('div', { class: 'status err', text: lvLabel(cur) + 'には既に ' + already + ' 件の記録があります。コピーした分は追加されます（置き換えません）。' }) : null,
-    h('p', { class: 'note', text: '器具記号・設置場所・数量・施工条件をコピーします。点灯状況・劣化状況・写真はコピーしません。不要な行はチェックを外してください。' }),
+    h('p', { class: 'note', text: '器具記号・設置場所・数量・施工条件を「予定」としてコピーします。現地で「数える」を押すと確認済みになります。点灯状況・劣化状況・写真はコピーしません。不要な行はチェックを外してください。' }),
     list,
     h('button', { type: 'button', class: 'primary big', text: lvLabel(cur) + 'にコピー', onclick: once(doCopy) }));
   overlay(sh);
@@ -1244,6 +1617,17 @@ function leaveFloor(nx) {
     });
     t.append(h('tr', {}, h('th', { text: '計' }), h('td'), h('td', { class: 'n', text: total })));
     sh.append(h('p', { class: 'note', text: 'Goodnotesの数量と合っているか確認してください。' }), t);
+    var off = recs.filter(function (r) { return r.fixtureId && !recDone(r); });
+    if (off.length) {
+      var ot = h('div', { class: 'list' });
+      off.forEach(function (r) {
+        var f = fxById(r.fixtureId);
+        ot.append(h('div', { class: 'item', style: 'align-items:center' }, h('span', { class: 'sym', text: f.symbol }),
+          h('div', { class: 'body' }, h('span', { class: 't', text: r.place || '（場所未入力）' }), h('span', { class: 's', text: r.cnt == null ? '未確認（予定 ' + r.plan + '）' : '確認 ' + r.cnt + ' / 予定 ' + r.plan })),
+          h('button', { type: 'button', class: 'small', text: '予定どおり', onclick: once(async function () { if (await confirmPlanned([recById(r.id)]) > 0) { closeOverlay(); renderSurvey(); leaveFloor(nx); } }) })));
+      });
+      sh.append(h('div', { class: 'status err', text: '予定と違う・未確認の記録が ' + off.length + ' 件あります。数え直すか「予定どおり」を押してください（表の数量は今の数です）。' }), ot);
+    }
     var uns = recs.filter(function (r) { return !r.fixtureId; }).length;
     if (uns) sh.append(h('div', { class: 'status err', text: '未整理（写真のみ）の記録が ' + uns + ' 件あります（数量に入っていません）。' }));
   }
@@ -1287,10 +1671,173 @@ function fixtureTotals(fid) {
   });
   return t;
 }
-function sortedFixtures() {
-  return S.fixtures.slice().sort(function (a, b) {
-    return (a.symbol || '').length - (b.symbol || '').length || (a.symbol || '').localeCompare(b.symbol || '', 'ja');
+/* 選択リストを「押して選ぶボタン」にする（1回押すと選択、もう一度押すと取り消し）。
+   データは元の <select> にそのまま入れるので、保存・CSV・引き継ぎ・コピーは今までと同じ。 */
+var SEL_VALUE = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+function chipSelect(sel) {
+  var box = h('div', { class: 'chipsel', role: 'group', 'aria-label': (sel.closest('label') ? sel.closest('label').firstChild.textContent : '') });
+  var btns = [];
+  Array.prototype.forEach.call(sel.options, function (o) {
+    if (!o.value) return;
+    var b = h('button', { type: 'button', text: o.textContent, 'aria-pressed': 'false', onclick: function () {
+      SEL_VALUE.set.call(sel, SEL_VALUE.get.call(sel) === o.value ? '' : o.value); sync();
+      sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true }));
+    } });
+    b.dataset.v = o.value; btns.push(b); box.append(b);
   });
+  function sync() { var v = SEL_VALUE.get.call(sel); btns.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.v === v)); }); }
+  // プログラムで値を入れたとき（記録を開いた・前の記録から引き継いだ）もボタンの表示を合わせる
+  Object.defineProperty(sel, 'value', { configurable: true, get: function () { return SEL_VALUE.get.call(sel); }, set: function (v) { SEL_VALUE.set.call(sel, v); sync(); } });
+  sel.addEventListener('change', sync);
+  sel.classList.add('visually-hidden'); sel.tabIndex = -1;
+  sel.after(box);
+  sync();
+}
+function heightChips(input, list) {
+  var box = h('div', { class: 'chipsel hchips', role: 'group', 'aria-label': 'よく使う高さ' });
+  list.forEach(function (v) {
+    box.append(h('button', { type: 'button', text: v, onclick: function () { input.value = v; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true })); } }));
+  });
+  input.after(box);
+}
+var HEIGHTS = ['2.4', '2.5', '2.7', '3.0', '3.5', '4.0', '5.0'];
+/* ---------- 器具記号：大文字・小文字は区別する（A と a は別の器具）。全角は半角に、空白は詰める ---------- */
+function normSym(s) { return (s || '').normalize('NFKC').replace(/\s+/g, '').trim(); }
+// 並び順：A〜Z → a〜z → (A)〜(Z) → (a)〜(z) → その他。同じ文字の中は 数字の小さい順 → 後ろの文字（W など）
+function symParts(sym) {
+  // (A)、(A)321、(A321)、(A321W) は「かっこ付き」、A・A321・A321W は「かっこなし」
+  var m = /^(\()?([A-Za-z])(\))?(\d*)([^()]*)(\))?$/.exec(sym || '');
+  if (!m || (m[1] ? !(m[3] || m[6]) || (m[3] && m[6]) : (m[3] || m[6]))) return { g: 4, l: '', n: -1, r: sym || '' };
+  var up = m[2] === m[2].toUpperCase();
+  return { g: (m[1] ? 2 : 0) + (up ? 0 : 1), l: m[2].toUpperCase(), n: m[4] === '' ? -1 : Number(m[4]), r: m[5] || '' };
+}
+function symCompare(a, b) {
+  var x = symParts(a), y = symParts(b);
+  return x.g - y.g || (x.l < y.l ? -1 : x.l > y.l ? 1 : 0) || x.n - y.n || x.r.localeCompare(y.r, 'ja', { numeric: true }) || (a || '').localeCompare(b || '', 'ja');
+}
+var SYM_GROUPS = [['大文字', 0], ['小文字', 1], ['(A)', 2], ['(a)', 3]];
+function symGroupLabel(g) { return ['A〜Z', 'a〜z', '(A)〜(Z)', '(a)〜(z)', 'その他'][g]; }
+/* 探す：① 記号から探す（頭文字ボタン＋記号の頭）／② 型番から確かめる（現地の型番・図面の型番の一部）
+   3か所（記録画面の記号の列・数える画面・器具記号タブ）で同じ絞り込み（S.findMode／S.symQ／S.symHead／S.modelQ）を使う */
+function modelKeyLoose(v) { return (v || '').normalize('NFKC').toUpperCase().replace(/[\s\-‐－ー_・.\/]/g, ''); }
+function fxMatches(f) {
+  if (S.findMode === 'model') {
+    var mq = modelKeyLoose(S.modelQ);
+    if (!mq) return true;
+    return [f.model, f.drawingModel, f.lamp].some(function (v) { return modelKeyLoose(v).indexOf(mq) >= 0; });
+  }
+  if (S.symHead) { var p = symParts(f.symbol); if (p.g !== S.symHead.g || p.l !== S.symHead.l) return false; }
+  var q = normSym(S.symQ);
+  return !q || (f.symbol || '').indexOf(q) === 0;
+}
+// 型番で探して見つからないとき：その型番を入れた状態で新しい器具の記録画面を開く
+function newFxWithModel(model) {
+  S.modelQ = '';
+  openEditor({});
+  $('e-model').value = model; markUnc(); updateDiffVis(); renderLinks(); scheduleDraft();
+  toast('型番 ' + model + ' を入れました。記号と数量を入れて保存してください');
+}
+function symFilterOn() { return S.findMode === 'model' ? !!modelKeyLoose(S.modelQ) : !!(normSym(S.symQ) || S.symHead); }
+// onNewModel(型番)：型番で探して1つも合わないとき「この型番で新しい記号を登録」で呼ぶ
+function symFilterBar(onChange, onNewModel) {
+  var box = h('div', { class: 'symfilter' });
+  function clearAll() { S.symQ = ''; S.symHead = null; S.modelQ = ''; }
+  function build() {
+    box.replaceChildren();
+    var mode = S.findMode === 'model' ? 'model' : 'sym';
+    box.append(h('div', { class: 'seg findmode' },
+      h('button', { type: 'button', 'aria-pressed': String(mode === 'sym'), text: '記号で探す', onclick: function () { S.findMode = 'sym'; build(); onChange(); } }),
+      h('button', { type: 'button', 'aria-pressed': String(mode === 'model'), text: '型番で探す', onclick: function () { S.findMode = 'model'; build(); onChange(); } })));
+    if (mode === 'model') {
+      var mq = h('input', { type: 'text', value: S.modelQ || '', placeholder: '銘板の型番の一部（例：61510、FHF32）', 'aria-label': '型番で探す', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', enterkeyhint: 'search', class: 'mono' });
+      var after = h('div');
+      function drawAfter() {
+        after.replaceChildren();
+        var key = modelKeyLoose(S.modelQ);
+        if (!key) { after.append(h('p', { class: 'note', text: '現地の型番と図面の型番の両方から探します。「-」や空白、大文字・小文字の違いは気にしなくて大丈夫です。入力欄を押して「テキストをスキャン」で銘板を読むこともできます。' })); return; }
+        var n = S.fixtures.filter(fxMatches).length;
+        if (!n) after.append(h('div', { class: 'status err', text: '「' + S.modelQ + '」に合う器具は登録されていません。' }),
+          onNewModel ? h('button', { type: 'button', class: 'primary', text: 'この型番で新しい記号を登録', onclick: function () { onNewModel(norm(S.modelQ)); } }) : null);
+        else after.append(h('p', { class: 'note', text: n + ' 件見つかりました。' }));
+        after.append(h('button', { type: 'button', class: 'small', text: '型番の入力を消す', onclick: function () { S.modelQ = ''; build(); onChange(); } }));
+      }
+      mq.addEventListener('input', function () { S.modelQ = mq.value; drawAfter(); onChange(); });
+      drawAfter();
+      box.append(mq, after);
+      return;
+    }
+    // 記号から探す：頭文字ボタン＋記号の頭（記号用のキー）
+    var sq = h('input', { type: 'text', value: S.symQ || '', placeholder: '記号の頭（例：(A3、a6）', 'aria-label': '記号で探す', autocomplete: 'off', spellcheck: 'false', class: 'mono' });
+    useSymKeypad(sq);
+    sq.addEventListener('input', function () { S.symQ = sq.value; drawHeads(); onChange(); });
+    var heads = h('div', { class: 'symheads' });
+    function drawHeads() {
+      heads.replaceChildren();
+      var have = {}; S.fixtures.forEach(function (f) { var p = symParts(f.symbol); if (p.g < 4) { (have[p.g] = have[p.g] || {})[p.l] = 1; } });
+      var groups = SYM_GROUPS.filter(function (g) { return have[g[1]]; });
+      if (groups.length) {
+        var gSel = S.symHead ? S.symHead.g : (S.symGroup != null && have[S.symGroup] ? S.symGroup : groups[0][1]);
+        if (groups.length > 1) heads.append(h('div', { class: 'seg' }, groups.map(function (g) {
+          return h('button', { type: 'button', 'aria-pressed': String(gSel === g[1]), text: g[0], onclick: function () { S.symGroup = g[1]; if (S.symHead && S.symHead.g !== g[1]) S.symHead = null; drawHeads(); onChange(); } });
+        })));
+        var row = h('div', { class: 'letters' });
+        Object.keys(have[gSel] || {}).sort().forEach(function (L) {
+          var lab = gSel === 0 ? L : gSel === 1 ? L.toLowerCase() : gSel === 2 ? '(' + L + ')' : '(' + L.toLowerCase() + ')';
+          var on = S.symHead && S.symHead.g === gSel && S.symHead.l === L;
+          row.append(h('button', { type: 'button', 'aria-pressed': String(!!on), text: lab, onclick: function () { S.symHead = on ? null : { g: gSel, l: L }; drawHeads(); onChange(); } }));
+        });
+        heads.append(row);
+      }
+      if (symFilterOn()) heads.append(h('button', { type: 'button', class: 'small', text: '絞り込みを消す', onclick: function () { clearAll(); build(); onChange(); } }));
+    }
+    drawHeads();
+    box.append(sq, heads);
+  }
+  build();
+  return box;
+}
+/* ---------- 記号用のキー：iPhoneのキーボードを切り替えずに A321W や (a)601 を入れる ---------- */
+function symKeypad(input, after) {
+  var old = document.querySelector('.kpad'); if (old) old.remove();
+  // 最初に押した文字で入れ替える（入っている記号は選択された状態）。⌫ なら続きから直せる
+  var val = normSym(input.value), lower = false, fresh = !!val;
+  var pv = h('div', { class: 'kpv', 'aria-live': 'polite' });
+  var letters = h('div', { class: 'kgrid' });
+  var capsB = h('button', { type: 'button' });
+  function draw() {
+    pv.textContent = val || '　'; pv.classList.toggle('fresh', fresh);
+    capsB.textContent = lower ? '小文字 a' : '大文字 A'; capsB.setAttribute('aria-pressed', String(lower));
+    letters.querySelectorAll('button').forEach(function (b) { var L = b.dataset.l; b.textContent = lower ? L.toLowerCase() : L; });
+  }
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(function (L) {
+    var b = h('button', { type: 'button', class: 'mono', onclick: function () { if (fresh) { val = ''; fresh = false; } val += lower ? L.toLowerCase() : L; draw(); } });
+    b.dataset.l = L; letters.append(b);
+  });
+  capsB.addEventListener('click', function () { lower = !lower; draw(); });
+  var digits = h('div', { class: 'kgrid' }, '1234567890-()'.split('').map(function (d) { return h('button', { type: 'button', class: 'mono', text: d, onclick: function () { if (fresh) { val = ''; fresh = false; } val += d; draw(); } }); }),
+    h('button', { type: 'button', text: '⌫', 'aria-label': '1文字消す', onclick: function () { fresh = false; val = val.slice(0, -1); draw(); } }));
+  function done() {
+    input.value = val; input.dispatchEvent(new Event('input', { bubbles: true })); input.dispatchEvent(new Event('change', { bubbles: true }));
+    pad.remove(); if (after) after();
+  }
+  var pad = h('div', { class: 'kpad', role: 'dialog', 'aria-label': '器具記号を入れる' },
+    h('div', { class: 'row' }, pv, h('button', { type: 'button', class: 'primary', text: '決定', onclick: done })),
+    h('div', { class: 'row' }, capsB, h('button', { type: 'button', text: 'クリア', onclick: function () { val = ''; fresh = false; draw(); } })),
+    letters, digits,
+    h('div', { class: 'row' },
+      h('button', { type: 'button', class: 'small', text: 'キーボードで入れる', onclick: function () { pad.remove(); input.setAttribute('inputmode', 'text'); input.focus(); } }),
+      h('button', { type: 'button', class: 'small', text: 'やめる', onclick: function () { pad.remove(); } })));
+  draw();
+  document.body.append(pad);
+}
+function useSymKeypad(input, after) {
+  input.setAttribute('inputmode', 'none'); input.setAttribute('autocapitalize', 'off');
+  if (window.__ledNoSymPad) { input.setAttribute('inputmode', 'text'); return; }   // 自動試験用（旧テストの手順を変えないため）
+  input.addEventListener('click', function () { if (input.getAttribute('inputmode') === 'none') symKeypad(input, after); });
+  input.addEventListener('blur', function () { if (input.getAttribute('inputmode') === 'text') input.setAttribute('inputmode', 'none'); });
+}
+function sortedFixtures() {
+  return S.fixtures.slice().sort(function (a, b) { return symCompare(a.symbol, b.symbol); });
 }
 function lastRecordOf(fid) {
   return S.records.filter(function (r) { return r.fixtureId === fid; }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); })[0] || null;
@@ -1299,38 +1846,67 @@ function lastRecordOf(fid) {
 function bulkFixtureSheet() {
   var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '器具記号をまとめて登録' },
     h('h2', { text: '器具記号をまとめて登録' }),
-    h('p', { class: 'note', text: 'Goodnotesの器具記号と種類だけを先に登録します。型番・寸法などは現場で「ここに追加」から追記できます。空欄の行は登録されません。' }));
+    h('p', { class: 'note', text: 'Goodnotesの器具記号と種類を先に登録します。図面（姿図・器具表）の型番があれば入れてください。現地の型番は現場で確かめます。空欄の行は登録されません。' }));
   var rows = h('div', { style: 'display:flex;flex-direction:column;gap:8px' });
   var err = h('div', { class: 'status bad', role: 'alert', hidden: true });
   var used = {}; S.fixtures.forEach(function (f) { used[f.symbol] = 1; });
   function addRow() {
-    var sym = h('input', { type: 'text', class: 'mono', placeholder: '記号', 'aria-label': '器具記号', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false', style: 'width:5.5rem;flex:none' });
+    var sym = h('input', { type: 'text', class: 'mono', placeholder: '記号', 'aria-label': '器具記号', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false', style: 'width:5.5rem;flex:none' });
+    useSymKeypad(sym);
     var kind = h('select', { 'aria-label': '器具種類' });
     fillSelect(kind, KINDS.map(function (k) { return [k.id, k.name + (k.cat ? '（' + CAT[k.cat] + '）' : '')]; }), '種類を選ぶ');
-    var row = h('div', { class: 'row', style: 'flex-wrap:nowrap' }, sym, h('div', { style: 'flex:1 1 auto;min-width:0' }, kind),
-      h('button', { type: 'button', class: 'small', 'aria-label': 'この行を消す', text: '×', onclick: function () { row.remove(); } }));
+    var dm = h('input', { type: 'text', class: 'mono', placeholder: '図面の型番（あれば）', 'aria-label': '図面の型番', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false' });
+    var row = h('div', { class: 'brow', style: 'display:flex;flex-direction:column;gap:4px;padding-bottom:6px;border-bottom:1px solid var(--line)' },
+      h('div', { class: 'row', style: 'flex-wrap:nowrap' }, sym, h('div', { style: 'flex:1 1 auto;min-width:0' }, kind),
+        h('button', { type: 'button', class: 'small', 'aria-label': 'この行を消す', text: '×', onclick: function () { row.remove(); } })), dm);
     rows.append(row);
   }
   for (var i = 0; i < 5; i++) addRow();
+  // 範囲で一度に作る（A〜F、(a)〜(d) など）
+  var AZ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  var rg = h('select', { 'aria-label': '範囲の種類' }), rf = h('select', { 'aria-label': '範囲の始め' }), rt = h('select', { 'aria-label': '範囲の終わり' }), rk = h('select', { 'aria-label': '範囲の器具種類' });
+  [['0', 'A〜Z'], ['1', 'a〜z'], ['2', '(A)〜(Z)'], ['3', '(a)〜(z)']].forEach(function (o) { rg.append(h('option', { value: o[0], text: o[1] })); });
+  AZ.forEach(function (L) { rf.append(h('option', { value: L, text: L })); rt.append(h('option', { value: L, text: L })); });
+  rt.value = 'F';
+  fillSelect(rk, KINDS.map(function (k) { return [k.id, k.name]; }), '種類はあとで');
+  function symOf(g, L) { var c = g % 2 ? L.toLowerCase() : L; return g >= 2 ? '(' + c + ')' : c; }
+  function fillRange() {
+    var g = Number(rg.value), a = AZ.indexOf(rf.value), b = AZ.indexOf(rt.value), made = 0, skip = [];
+    if (b < a) { var t = a; a = b; b = t; }
+    var inRows = {}; rows.querySelectorAll('.brow').forEach(function (r) { var v = normSym(r.querySelector('input').value); if (v) inRows[v] = 1; });
+    for (var i = a; i <= b; i++) {
+      var sy = symOf(g, AZ[i]);
+      if (used[sy] || inRows[sy]) { skip.push(sy); continue; }
+      var empty = Array.prototype.find.call(rows.querySelectorAll('.brow'), function (r) { return !r.querySelector('input').value && !r.querySelector('select').value; });
+      if (!empty) { addRow(); empty = rows.lastElementChild; }
+      empty.querySelector('input').value = sy;
+      if (rk.value) empty.querySelector('select').value = rk.value;
+      made++;
+    }
+    toast(made + '行を作りました' + (skip.length ? '（登録済み・入力済みのため飛ばした記号：' + skip.join('、') + '）' : '') + '。種類を確かめて「登録する」を押してください');
+  }
+  sh.append(h('details', { class: 'card', style: 'padding:8px 10px' }, h('summary', { text: '範囲で一度に作る（A〜F、(a)〜(d) など）' }),
+    h('div', { class: 'row', style: 'margin-top:6px' }, rg, rf, h('span', { text: '〜' }), rt),
+    h('div', { class: 'row' }, rk, h('button', { type: 'button', class: 'small primary', text: '行を作る', onclick: fillRange }))));
   async function saveAll() {
     err.hidden = true;
     var list = [], seen = {}, problem = '';
-    rows.querySelectorAll('.row').forEach(function (r) {
+    rows.querySelectorAll('.brow').forEach(function (r) {
       if (problem) return;
-      var symIn = r.querySelector('input'), kindSel = r.querySelector('select');
-      var sym = norm(symIn.value), kind = kindSel.value;
+      var symIn = r.querySelector('input'), kindSel = r.querySelector('select'), dmIn = r.querySelector('input[aria-label="図面の型番"]');
+      var sym = normSym(symIn.value), kind = kindSel.value, dmv = norm(dmIn.value);
       if (!sym && !kind) return;
       if (!kind) { problem = '記号 ' + sym + ' の種類を選んでください。'; return; }
       if (!sym) { problem = '種類を選んだ行に記号がありません。Goodnotesの記号を入れてください。'; return; }
       if (used[sym]) { problem = '記号 ' + sym + ' はこの案件に登録済みです。別の記号にしてください。'; return; }
       if (seen[sym]) { problem = '記号 ' + sym + ' が2回入っています。'; return; }
-      seen[sym] = 1; list.push({ symbol: sym, kind: kind });
+      seen[sym] = 1; list.push({ symbol: sym, kind: kind, drawingModel: dmv });
     });
     if (!problem && !list.length) problem = '登録する行がありません。種類を選んでください。';
     if (problem) { err.textContent = problem; err.hidden = false; return; }
     var now = Date.now();
     var fxs = list.map(function (x) {
-      return { id: uid('fx'), projectId: S.p.id, symbol: x.symbol, kind: x.kind, maker: '', model: '', lamp: '', ballast: '', cct: '', cctMethod: '', watt: '', volt: '',
+      return { id: uid('fx'), projectId: S.p.id, symbol: x.symbol, kind: x.kind, maker: '', model: '', drawingModel: x.drawingModel || '', lamp: '', ballast: '', cct: '', cctMethod: '', watt: '', volt: '',
         dims: {}, ambience: false, needLookup: false, memo: '', spec: '', cands: [], createdAt: now, updatedAt: now };
     });
     var ops = fxs.map(function (f) { return ['put', 'fixtures', f]; });
@@ -1351,13 +1927,22 @@ function renderFixturesTab() {
   var wrap = h('div', { style: 'display:flex;flex-direction:column;gap:10px' });
   wrap.append(h('button', { type: 'button', class: 'primary', text: '＋ 器具記号をまとめて登録（記号と種類だけ）', onclick: bulkFixtureSheet }));
   wrap.append(h('p', { class: 'note', text: '登録済みの器具を呼び出して、今の階・場所（' + lvLabel(S.p.current.level) + (currentPlace() ? ' ' + currentPlace() : '') + '）に数量を追加できます。' }));
-  var fx = sortedFixtures();
-  if (!fx.length) { wrap.append(h('div', { class: 'empty', text: 'まだ器具記号がありません。「＋ 器具を記録」で最初の器具（A など）を登録してください。' })); return wrap; }
+  var fxAll = sortedFixtures();
+  if (!fxAll.length) { wrap.append(h('div', { class: 'empty', text: 'まだ器具記号がありません。「＋ 器具を記録」で最初の器具（A など）を登録してください。' })); return wrap; }
+  var lists = h('div', { style: 'display:flex;flex-direction:column;gap:10px' });
+  if (fxAll.length >= 8) wrap.append(symFilterBar(drawLists, newFxWithModel));
+  wrap.append(lists);
+  drawLists();
+  return wrap;
+  function drawLists() {
+  lists.replaceChildren();
+  var fx = fxAll.filter(fxMatches);
+  if (!fx.length) lists.append(h('div', { class: 'empty', text: '合う記号がありません。「絞り込みを消す」で全部に戻ります。' }));
   ['general', 'exit', 'emergency'].forEach(function (c) {
     var list = fx.filter(function (f) { return catOf(f) === c; });
     if (!list.length) return;
-    wrap.append(h('h3', { text: CAT[c] }));
-    wrap.append(h('div', { class: 'list' }, list.map(function (f) {
+    lists.append(h('h3', { text: CAT[c] }));
+    lists.append(h('div', { class: 'list' }, list.map(function (f) {
       var t = fixtureTotals(f.id);
       var lv = Object.keys(t.lv).sort(function (a, b) { return lvRank(a) - lvRank(b); }).map(function (l) { return lvLabel(l) + ' ' + t.lv[l]; }).join('・');
       var row = h('div', { class: 'item' },
@@ -1365,6 +1950,8 @@ function renderFixturesTab() {
         h('div', { class: 'body' },
           h('span', { class: 't', text: kindName(f.kind) || '種類未入力' }),
           f.model ? h('span', { class: 'm', text: f.model }) : null,
+          f.drawingModel && f.drawingModel !== f.model ? h('span', { class: 's', text: '図面 ' + f.drawingModel }) : null,
+          fxDiff(f) ? h('span', { class: 'pill bad', text: '図面と相違' }) : null,
           h('span', { class: 's', text: [makerName(f.maker), f.lamp ? 'ランプ ' + f.lamp : '', f.watt ? f.watt + 'W' : ''].filter(Boolean).join(' / ') }),
           h('span', { class: 's', text: lv || '（設置記録なし）' })
         ),
@@ -1377,7 +1964,7 @@ function renderFixturesTab() {
       return row;
     })));
   });
-  return wrap;
+  }
 }
 
 /* ---------- 集計 ---------- */
@@ -1411,8 +1998,15 @@ function renderSumTab() {
       h('button', { type: 'button', class: 'primary', text: '台帳CSV', onclick: exportLedgerCsv }),
       h('button', { type: 'button', text: '集計CSV', onclick: exportSummaryCsv })
     ),
-    h('button', { type: 'button', text: 'この案件を写真ごとバックアップ（.zip）', onclick: function () { exportBackup([S.p.id]); } }),
-    h('p', { class: 'note', text: 'CSVはExcelでそのまま開けます（UTF-8 BOM付き）。バックアップには写真が入ります。写真付きPDF報告書は未実装です。' })
+    h('button', { type: 'button', class: 'primary big', text: '会社に保存する（写真ごとバックアップ .zip）', onclick: function () { saveFlow(); } }),
+    (function () { var vi = h('input', { type: 'file', class: 'visually-hidden', id: 's-verify-file', accept: '.zip,application/zip' });
+      vi.addEventListener('change', function (e) { var f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) verifyBackup(f, { pid: S.p.id }); });
+      return h('div', {}, vi, h('label', { class: 'btn', for: 's-verify-file', text: '保存したZIPの中身を確かめる' })); })(),
+    (function () { var st = h('p', { class: 'note', text: '' }); var pid = S.p.id;
+      Promise.all([getMeta('bk_' + pid), getMeta('vf_' + pid)]).then(function (v) {
+        st.textContent = '最後のバックアップ：' + (v[0] ? stamp(v[0]) : 'まだありません') + '／会社に保存して確かめた：' + (v[1] ? stamp(v[1].at) + '（' + v[1].name + '）' : 'まだありません');
+      }).catch(function () {}); return st; })(),
+    h('p', { class: 'note', text: '現場では「このiPhone内」に、帰社後はLAN DISK Xの「LED調査」に保存し、続けて表示される「保存したZIPを選んで確かめる」で確認します。CSVはExcelでそのまま開けます。写真付きPDF報告書は未実装です。' })
   );
   wrap.append(out);
   var unsorted = S.records.filter(function (r) { return !r.fixtureId; }).length;
@@ -1453,10 +2047,10 @@ function overlay(content, onClose, opts) {
   if (!(opts && opts.noTop) && content.classList && content.classList.contains('sheet')) {
     content.prepend(h('div', { class: 'sheettop' }, h('button', { type: 'button', text: '閉じる ✕', 'aria-label': '閉じる', onclick: function () { closeOverlay(); if (onClose) onClose(); } })));
   }
-  ov.replaceChildren(content); ov.hidden = false;
+  ov.replaceChildren(content); ov.hidden = false; document.documentElement.classList.add('ovopen');
   ov.onclick = function (e) { if (e.target === ov) { closeOverlay(); if (onClose) onClose(); } };
 }
-function closeOverlay() { var ov = $('overlay'); ov.hidden = true; ov.replaceChildren(); ov.onclick = null; }
+function closeOverlay() { var ov = $('overlay'); ov.hidden = true; ov.replaceChildren(); ov.onclick = null; document.documentElement.classList.remove('ovopen'); }
 function ask(message, buttons) {
   return new Promise(function (resolve) {
     var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true' }, h('p', { text: message, style: 'white-space:pre-wrap' }));
@@ -1583,10 +2177,165 @@ async function quickPhotos(files) {
 }
 function blankRecord() {
   return { id: uid('r'), projectId: S.p.id, fixtureId: null, level: S.p.current.level, place: currentPlace(), qty: 1,
-    lit: '', det: '', ceilH: '', mountH: '', hMethod: '', mount: '', difficulty: '', access: [], plate: '', reuse: '', repair: '', wet: '', notes: '',
+    lit: '', det: '', ceilH: '', mountH: '', ceilSpace: '', hMethod: '', mount: '', difficulty: '', access: [], plate: REC_DEFAULTS.plate, reuse: '', repair: REC_DEFAULTS.repair, wet: '', notes: '',
     status: 'ok', createdAt: Date.now(), updatedAt: Date.now() };
 }
 
+/* ====================================================================
+   図面（平面図・姿図・その他）
+   - 写真と同じ保存場所（photos / photoData）に kind:'図面' で入れる。記録・器具には付けない。
+   - dwType: 'plan'（平面図・dwLevels に階）／'elev'（姿図・dwSymbols に記号）／'other'
+   - 端末内とバックアップ（ZIP）にだけ入れる。クラウドには送らない（会社の図面を社外に出さないため）。
+   ==================================================================== */
+var DW_TYPES = [['plan', '平面図'], ['elev', '姿図・器具表'], ['other', 'その他']];
+function isDrawing(p) { return !!p && p.kind === '図面'; }
+function drawings() { return S.photos.filter(isDrawing).sort(function (a, b) { return (a.dwName || '').localeCompare(b.dwName || '', 'ja', { numeric: true }) || a.createdAt - b.createdAt; }); }
+function plansOf(level) { return drawings().filter(function (d) { return d.dwType === 'plan' && (d.dwLevels || []).indexOf(level) >= 0; }); }
+function elevsOf(fid) { var f = fxById(fid); if (!f) return []; return drawings().filter(function (d) { return d.dwType === 'elev' && (d.dwSymbols || []).indexOf(f.symbol) >= 0; }); }
+function dwLabel(d) {
+  if (d.dwType === 'plan') return '平面図　' + ((d.dwLevels || []).map(lvLabel).join('・') || '階が未設定');
+  if (d.dwType === 'elev') return '姿図　' + ((d.dwSymbols || []).join('・') || '記号が未設定');
+  return DW_TYPES.find(function (t) { return t[0] === d.dwType; }) ? 'その他' : '未設定';
+}
+var pdfjsLib = null;
+async function loadPdfjs() {
+  if (pdfjsLib) return pdfjsLib;
+  var base = location.href.replace(/[^\/]*$/, '');
+  var m = await import(base + 'pdf.min.mjs');
+  m.GlobalWorkerOptions.workerSrc = base + 'pdf.worker.min.mjs';
+  pdfjsLib = m; return m;
+}
+function canvasJpeg(c, q) { return new Promise(function (res, rej) { c.toBlob(function (b) { b ? res(b) : rej(new Error('図面の変換に失敗しました（メモリ不足の可能性）')); }, 'image/jpeg', q); }); }
+async function drawingFromBlob(blob) {
+  var li = await loadImage(blob);
+  try {
+    var full = await drawJpeg(li.img, 3200, 0.85), th = await drawJpeg(li.img, 320, 0.7);
+    return { data: await full.blob.arrayBuffer(), thumb: await th.blob.arrayBuffer(), w: full.w, h: full.h };
+  } finally { URL.revokeObjectURL(li.url); }
+}
+async function saveDrawing(pr, name, page) {
+  var now = Date.now();
+  var meta = { id: uid('ph'), projectId: S.p.id, recordId: null, fixtureId: null, kind: '図面', level: '', place: '', w: pr.w, h: pr.h, size: pr.data.byteLength, thumb: pr.thumb,
+    createdAt: now, assetId: null, dwType: '', dwLevels: [], dwSymbols: [], dwName: name, dwPage: page || 1 };
+  await saveVerified([['put', 'photos', meta], ['put', 'photoData', { id: meta.id, projectId: S.p.id, type: 'image/jpeg', data: pr.data }]]);
+  S.photos.push(meta);
+  return meta;
+}
+async function importPdf(file) {
+  var lib;
+  try { lib = await loadPdfjs(); }
+  catch (e) { toast('PDFを読む部品（pdf.min.mjs）が見つかりません。GitHubに上げたか確かめてください。今は図面を写真で撮って入れてください', true); return []; }
+  var made = [], name = (file.name || '図面').replace(/\.pdf$/i, '');
+  var doc;
+  try { doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise; }
+  catch (e) { toast('PDFを開けませんでした：' + errText(e), true); return []; }
+  for (var i = 1; i <= doc.numPages; i++) {
+    toast('図面を取り込んでいます… ' + i + ' / ' + doc.numPages + 'ページ');
+    try {
+      var page = await doc.getPage(i);
+      var v1 = page.getViewport({ scale: 1 });
+      var scale = Math.min(6, 3200 / Math.max(v1.width, v1.height));
+      var vp = page.getViewport({ scale: scale });
+      var c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+      var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
+      await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      var blob = await canvasJpeg(c, 0.85); c.width = c.height = 0;
+      made.push(await saveDrawing(await drawingFromBlob(blob), name + ' p.' + i, i));
+    } catch (e) { toast(i + 'ページ目を取り込めませんでした：' + errText(e), true); }
+  }
+  try { doc.destroy(); } catch (e) {}
+  return made;
+}
+async function importDrawingFiles(files) {
+  if (!files.length) return;
+  var made = [];
+  for (var i = 0; i < files.length; i++) {
+    var f = files[i];
+    if (/pdf$/i.test(f.type) || /\.pdf$/i.test(f.name || '')) made = made.concat(await importPdf(f));
+    else {
+      try { made.push(await saveDrawing(await drawingFromBlob(f), '図面の写真 ' + stamp(Date.now()), 1)); }
+      catch (e) { toast('図面を保存できませんでした：' + errText(e), true); }
+    }
+  }
+  if (!made.length) return;
+  touchProject();
+  toast('図面 ' + made.length + 'ページを入れました。何の図面かを選んでください');
+  assignDrawing(made[0].id, made.map(function (m) { return m.id; }));
+}
+function drawingSheet() {
+  var lv = S.p.current.level, all = drawings(), mine = plansOf(lv);
+  var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '図面' }, h('h2', { text: '図面' }));
+  function item(d, primary) {
+    return h('div', { class: 'item', style: 'align-items:center' },
+      h('button', { type: 'button', class: 'thumb', 'aria-label': d.dwName + 'を大きく見る', onclick: function () { openFull(d.id); } }, thumbImg(d)),
+      h('div', { class: 'body' }, h('span', { class: 't', text: dwLabel(d) }), h('span', { class: 's', text: d.dwName || '' })),
+      h('div', { class: 'side' },
+        h('button', { type: 'button', class: 'small' + (primary ? ' primary' : ''), text: '見る', onclick: function () { openFull(d.id); } }),
+        h('button', { type: 'button', class: 'small', text: '設定', onclick: function () { closeOverlay(); assignDrawing(d.id); } })));
+  }
+  sh.append(h('h3', { text: lvLabel(lv) + 'の平面図' }));
+  if (mine.length) sh.append(h('div', { class: 'list' }, mine.map(function (d) { return item(d, true); })));
+  else sh.append(h('p', { class: 'note', text: lvLabel(lv) + 'の平面図はまだありません。下で図面を入れて「平面図」と階を選ぶと、ここに出ます。' }));
+  var rest = all.filter(function (d) { return mine.indexOf(d) < 0; });
+  if (rest.length) sh.append(h('h3', { text: 'ほかの図面' }), h('div', { class: 'list' }, rest.map(function (d) { return item(d, false); })));
+  sh.append(h('div', { class: 'grid2' },
+    h('button', { type: 'button', text: '＋ PDFを入れる', onclick: function () { closeOverlay(); $('dw-pdf').click(); } }),
+    h('button', { type: 'button', text: '📷 図面を撮る', onclick: function () { closeOverlay(); $('dw-cam').click(); } })),
+    h('p', { class: 'note', text: '図面はこのiPhoneの中とバックアップ（ZIP）にだけ保存します。社外（クラウド）には送りません。1ページ約1〜2MBです。' }),
+    h('button', { type: 'button', text: '閉じる', onclick: closeOverlay }));
+  overlay(sh);
+}
+// 図面1ページの種類と、階（平面図）／記号（姿図）を選ぶ。queue があれば続けて次のページへ
+function assignDrawing(id, queue) {
+  var d = S.photos.find(function (x) { return x.id === id; }); if (!d) return;
+  queue = queue || [id];
+  var idx = queue.indexOf(id);
+  var type = d.dwType || '', lvSel = (d.dwLevels || []).slice(), symSel = (d.dwSymbols || []).slice();
+  var nameIn = h('input', { type: 'text', value: d.dwName || '', 'aria-label': '図面の名前', autocomplete: 'off' });
+  var segT = h('div', { class: 'seg' }), pick = h('div');
+  function renderPick() {
+    segT.replaceChildren(); pick.replaceChildren();
+    DW_TYPES.forEach(function (t) { segT.append(h('button', { type: 'button', 'aria-pressed': String(type === t[0]), text: t[1], onclick: function () { type = t[0]; renderPick(); } })); });
+    if (type === 'plan') {
+      pick.append(h('p', { class: 'note', text: 'この平面図を使う階を選びます（同じ図面の階はまとめて選べます）' }));
+      var g = h('div', { class: 'seg' });
+      allLevels(S.p).forEach(function (l) { g.append(h('button', { type: 'button', 'aria-pressed': String(lvSel.indexOf(l) >= 0), text: lvLabel(l), onclick: function () { var k = lvSel.indexOf(l); if (k >= 0) lvSel.splice(k, 1); else lvSel.push(l); renderPick(); } })); });
+      pick.append(g);
+    } else if (type === 'elev') {
+      pick.append(h('p', { class: 'note', text: 'このページに載っている器具の記号を選びます（いくつでも）' }));
+      var gs = h('div', { class: 'seg' });
+      sortedFixtures().forEach(function (f) { gs.append(h('button', { type: 'button', 'aria-pressed': String(symSel.indexOf(f.symbol) >= 0), text: f.symbol, onclick: function () { var k = symSel.indexOf(f.symbol); if (k >= 0) symSel.splice(k, 1); else symSel.push(f.symbol); renderPick(); } })); });
+      if (!S.fixtures.length) gs.append(h('span', { class: 'note', text: '器具記号がまだありません。「器具記号」タブで登録すると選べます。' }));
+      pick.append(gs);
+    }
+  }
+  renderPick();
+  async function save(goNext) {
+    var nd = Object.assign({}, d, { dwType: type, dwLevels: type === 'plan' ? lvSel.slice() : [], dwSymbols: type === 'elev' ? symSel.slice() : [], dwName: nameIn.value.trim() || d.dwName });
+    try { await saveVerified([['put', 'photos', nd]]); } catch (e) { toast('保存できませんでした：' + errText(e), true); return; }
+    replaceIn(S.photos, nd); touchProject();
+    closeOverlay();
+    if (goNext && idx >= 0 && idx < queue.length - 1) assignDrawing(queue[idx + 1], queue);
+    else { renderSurvey(); toast('図面を保存しました：' + dwLabel(nd)); }
+  }
+  async function del() {
+    var c = await ask('この図面（' + (d.dwName || '') + '）を削除しますか？', [{ label: '削除する', value: 'y', cls: 'danger' }, { label: 'やめる', value: null }]);
+    if (c !== 'y') { assignDrawing(id, queue); return; }
+    try { await saveVerified([['del', 'photos', d.id], ['del', 'photoData', d.id]]); } catch (e) { toast('削除できませんでした：' + errText(e), true); return; }
+    S.photos = S.photos.filter(function (x) { return x.id !== d.id; }); touchProject();
+    var rest = queue.filter(function (q) { return q !== d.id; });
+    if (rest.length && idx < queue.length - 1) assignDrawing(queue[idx + 1], rest); else { renderSurvey(); toast('図面を削除しました'); }
+  }
+  var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '図面の設定' },
+    h('h2', { text: '何の図面ですか？' + (queue.length > 1 ? '（' + (idx + 1) + ' / ' + queue.length + 'ページ）' : '') }),
+    h('button', { type: 'button', class: 'thumb', style: 'width:100%', onclick: function () { openFull(d.id); } }, (function () { var im = thumbImg(d); im.style.width = '100%'; im.style.height = 'auto'; im.style.maxHeight = '40vh'; im.style.objectFit = 'contain'; return im; })(), h('span', { text: '押すと大きく見られます' })),
+    h('label', { class: 'f' }, '図面の名前', nameIn),
+    segT, pick,
+    queue.length > 1 && idx < queue.length - 1 ? h('button', { type: 'button', class: 'primary big', text: '保存して次のページへ', onclick: once(function () { return save(true); }) }) : null,
+    h('button', { type: 'button', class: queue.length > 1 && idx < queue.length - 1 ? '' : 'primary big', text: queue.length > 1 && idx < queue.length - 1 ? '保存して閉じる' : '保存する', onclick: once(function () { return save(false); }) }),
+    h('button', { type: 'button', class: 'danger', text: 'この図面を削除', onclick: del }));
+  overlay(sh);
+}
 /* ====================================================================
    器具の記録（編集画面）
    ==================================================================== */
@@ -1602,7 +2351,7 @@ function openEditor(o) {
     if (o.fixtureId) {
       fxId = o.fixtureId;
       var src = o.copyFrom ? recById(o.copyFrom) : null;
-      if (src) ['ceilH', 'mountH', 'hMethod', 'mount', 'difficulty', 'access', 'plate', 'reuse', 'repair', 'wet'].forEach(function (k) { rec[k] = Array.isArray(src[k]) ? src[k].slice() : src[k]; });
+      if (src) copyConditions(rec, src, null);   // 引き継ぐ項目は COPY_FIELDS にまとめてある
     }
   }
   var fx = fxId ? fxById(fxId) : null;
@@ -1615,7 +2364,7 @@ function openEditor(o) {
     $('e-level').value = rec.level; $('e-place').value = rec.place || '';
     $('e-qty').value = rec.qty == null ? '' : rec.qty;
     $('e-lit').value = rec.lit || ''; $('e-det').value = rec.det || '';
-    $('e-ceil').value = rec.ceilH || ''; $('e-mh').value = rec.mountH || ''; $('e-hm').value = rec.hMethod || '';
+    $('e-ceil').value = rec.ceilH || ''; $('e-mh').value = rec.mountH || ''; $('e-space').value = rec.ceilSpace || ''; $('e-hm').value = rec.hMethod || '';
     $('e-mount').value = rec.mount || ''; $('e-diff').value = rec.difficulty || '';
     document.querySelectorAll('#e-access input').forEach(function (c) { c.checked = (rec.access || []).indexOf(c.value) >= 0; });
     $('e-plate').value = rec.plate || ''; $('e-reuse').value = rec.reuse || ''; $('e-repair').value = rec.repair || ''; $('e-wet').value = rec.wet || '';
@@ -1629,6 +2378,10 @@ function openEditor(o) {
   renderChips(); renderPkind(); renderEditorPhotos(); renderLinks(); renderCands();
   // 登録済みの器具を記録するときは仕様を折りたたみ、施工条件と写真を近くに出す
   setSpecFold(mode !== 'fixture' && specSettled(fx));
+  loadSingle(rec && rec.single, o.single); renderSingleEditor();
+  $('e-level').closest('label').hidden = isSingle();
+  $('e-place').placeholder = isSingle() ? '例：3階 共用廊下' : '';
+  if (isSingle() && !persisted && mode === 'record') { $('e-title').textContent = sgKindLabel(SGE.kind) + 'を記録'; setSpecFold(false); }
   show('edit');
 }
 // 型番が入っていて「?」も「帰社後に調べる」もない器具だけ、仕様を折りたたむ
@@ -1637,15 +2390,16 @@ function setSpecFold(fold) {
   var c = $('e-speccard'); c.classList.toggle('folded', !!fold);
   $('e-spectoggle').textContent = fold ? '表示して直す' : '隠す';
   var f = readFixtureForm(), d = f.dims || {};
-  var sum = [makerName(f.maker), f.model, f.lamp ? 'ランプ ' + f.lamp : '', f.cct, f.watt ? f.watt + 'W' : '', Object.keys(d).map(function (k) { return d[k]; }).join('・')].filter(Boolean).join(' / ');
+  var sum = [makerName(f.maker), f.model, f.drawingModel && f.drawingModel !== f.model ? '図面 ' + f.drawingModel : '', f.lamp ? 'ランプ ' + f.lamp : '', f.cct, f.watt ? f.watt + 'W' : '', Object.keys(d).map(function (k) { return d[k]; }).join('・')].filter(Boolean).join(' / ');
   $('e-specsum').hidden = !fold; $('e-specsum').textContent = sum || '（仕様は未入力）';
 }
 function loadFixtureFields(fx) {
-  E.autoSym = fx ? '' : (E.mode === 'record' && E.persisted && !E.rec.fixtureId ? '' : nextSymbol());
+  E.autoSym = fx ? '' : (E.mode === 'record' && E.persisted && !E.rec.fixtureId ? '' : (isSingle() ? nextSingleSymbol() : nextSymbol()));
   $('e-symbol').value = fx ? fx.symbol : E.autoSym;
   $('e-kind').value = fx ? fx.kind || '' : '';
   $('e-maker').value = fx ? fx.maker || '' : '';
   $('e-model').value = fx ? fx.model || '' : '';
+  $('e-dmodel').value = fx ? fx.drawingModel || '' : '';
   $('e-lamp').value = fx ? fx.lamp || '' : '';
   $('e-ballast').value = fx ? fx.ballast || '' : '';
   $('e-src').value = fx ? fx.source || '' : '';
@@ -1675,7 +2429,7 @@ function loadFixtureFields(fx) {
   $('e-fxmemo').value = fx ? fx.memo || '' : '';
   $('e-spec').value = fx ? fx.spec || '' : '';
   renderDims(fx ? fx.dims || {} : {});
-  markUnc(); updateFxNote(); updateSpecOpen();
+  markUnc(); updateFxNote(); updateSpecOpen(); updateDiffVis();
 }
 function nextSymbol() {
   var used = {};
@@ -1686,7 +2440,7 @@ function nextSymbol() {
   return '';
 }
 function updateFxNote() {
-  var n = $('e-fxnote'), sym = norm($('e-symbol').value);
+  var n = $('e-fxnote'), sym = normSym($('e-symbol').value);
   if (E.fixtureId) {
     var t = fixtureTotals(E.fixtureId);
     n.textContent = '登録済みの器具 ' + fxById(E.fixtureId).symbol + ' を使っています（登録済み ' + t.n + ' か所・計 ' + t.q + ' 台）。仕様を直すと、この記号のすべての場所に反映されます。';
@@ -1695,14 +2449,26 @@ function updateFxNote() {
     n.textContent = dup ? '記号 ' + sym + ' は登録済みです。上の一覧から ' + sym + ' を選んでください。' : '新しい器具記号 ' + sym + ' として登録します。';
   } else n.textContent = E.mode === 'record' ? '記号を空にすると「写真のみ（未整理）」として保存します。' : '';
 }
-function renderChips() {
+function renderChips(keepFind) {
   var box = $('e-chips'); box.replaceChildren();
-  if (E.mode === 'fixture') { box.hidden = true; return; }
+  var find = $('e-find');
+  if (E.mode === 'fixture') { box.hidden = true; find.replaceChildren(); return; }
   box.hidden = false;
+  // 記号が多いときは探す欄（記号で探す／型番で探す）を出し、記号の列は折り返して並べる
+  if (!keepFind) {
+    find.replaceChildren();
+    if (S.fixtures.length >= 8) find.append(symFilterBar(function () { renderChips(true); }, function (model) {
+      selectFixture(null); $('e-model').value = model; markUnc(); updateDiffVis(); renderLinks(); scheduleDraft();
+      S.modelQ = ''; renderChips(); $('e-symbol').scrollIntoView({ block: 'center' });
+      toast('型番 ' + model + ' を入れました。記号を入れて登録してください');
+    }));
+  }
   box.append(h('button', { type: 'button', class: 'chip', 'aria-pressed': String(!E.fixtureId), onclick: function () { selectFixture(null); } }, '＋ 新しい記号', h('small', { text: '新規に登録' })));
-  sortedFixtures().forEach(function (f) {
+  var list = sortedFixtures().filter(function (f) { return f.id === E.fixtureId || fxMatches(f); });
+  if (S.fixtures.length >= 8 && symFilterOn() && !list.length) box.append(h('span', { class: 'note', text: '合う記号がありません' }));
+  list.forEach(function (f) {
     box.append(h('button', { type: 'button', class: 'chip', 'aria-pressed': String(E.fixtureId === f.id), onclick: function () { selectFixture(f.id); } },
-      f.symbol + '　' + (kindName(f.kind) || ''), h('small', { text: f.model || '型番未入力' })));
+      f.symbol + '　' + (kindName(f.kind) || ''), h('small', { text: f.model || (f.drawingModel ? '図面 ' + f.drawingModel : '型番未入力') })));
   });
 }
 function selectFixture(fid) {
@@ -1720,7 +2486,7 @@ function selectFixture(fid) {
   if (fx && !$('e-mount').value) { var k = kindOf(fx.kind); if (k && k.mount) $('e-mount').value = k.mount; }
   E.dirty = true;
   setSpecFold(specSettled(fx));
-  renderChips(); renderLinks(); renderCands(); scheduleDraft();
+  renderChips(); renderLinks(); renderCands(); renderOtherPhotos(editorPhotos()); scheduleDraft();
 }
 function renderDims(vals) {
   var box = $('e-dims'); box.replaceChildren();
@@ -1752,6 +2518,7 @@ function editorPhotos() {
 function renderEditorPhotos() {
   var box = $('e-photos'); box.replaceChildren();
   var ph = editorPhotos();
+  renderOtherPhotos(ph);
   $('e-pcount').textContent = ph.length ? ph.length + '枚（保存済み）' : '';
   if (!ph.length) { box.append(h('p', { class: 'note', text: 'まだ写真はありません。種類を選んでから撮影してください。' })); return; }
   ph.sort(function (a, b) { return a.createdAt - b.createdAt; }).forEach(function (p) {
@@ -1759,10 +2526,27 @@ function renderEditorPhotos() {
       thumbImg(p), h('span', { text: p.kind })));
   });
 }
+// 同じ記号の写真は、どの階・場所の記録からも見られるようにする（写真は撮った記録に付いたまま。コピーはしない）
+function renderOtherPhotos(own) {
+  var wrap = $('e-other'), box = $('e-ophotos'); box.replaceChildren();
+  var ids = {}; (own || []).forEach(function (p) { ids[p.id] = 1; });
+  var other = E && E.mode === 'record' && E.fixtureId ? photosOfFixture(E.fixtureId).filter(function (p) { return !ids[p.id]; }) : [];
+  wrap.hidden = !other.length;
+  other.sort(function (a, b) { return a.createdAt - b.createdAt; }).forEach(function (p) {
+    box.append(h('button', { type: 'button', class: 'thumb', onclick: function () { openFull(p.id); } },
+      thumbImg(p), h('span', { text: lvLabel(p.level) + (p.place ? ' ' + p.place : '') + '・' + p.kind })));
+  });
+}
+async function openFull(pid) {
+  var key = 'full_' + pid;
+  if (!S.urls[key]) { try { S.urls[key] = URL.createObjectURL(await photoBlob(pid)); } catch (e) { toast(errText(e), true); return; } }
+  var p = S.photos.find(function (x) { return x.id === pid; }) || {};
+  fullView(S.urls[key], (p.kind || '写真'));
+}
 function readFixtureForm() {
   return {
-    symbol: norm($('e-symbol').value), kind: $('e-kind').value, maker: $('e-maker').value,
-    model: norm($('e-model').value), lamp: norm($('e-lamp').value), ballast: norm($('e-ballast').value),
+    symbol: normSym($('e-symbol').value), kind: $('e-kind').value, maker: $('e-maker').value,
+    model: norm($('e-model').value), drawingModel: norm($('e-dmodel').value), lamp: norm($('e-lamp').value), ballast: norm($('e-ballast').value),
     battery: norm($('e-battery').value), batterySpec: clean($('e-batspec').value),
     source: $('e-src').value, output: isFluor($('e-src').value) ? $('e-out').value : '',
     cct: clean($('e-cct').value), cctMethod: $('e-cctm').value, watt: clean($('e-watt').value), volt: clean($('e-volt').value),
@@ -1773,14 +2557,15 @@ function readRecordForm() {
   var q = clean($('e-qty').value);
   return {
     level: $('e-level').value, place: $('e-place').value.trim(), qty: q === '' ? null : Number(q),
-    lit: $('e-lit').value, det: $('e-det').value, ceilH: clean($('e-ceil').value), mountH: clean($('e-mh').value), hMethod: $('e-hm').value,
+    lit: $('e-lit').value, det: $('e-det').value, ceilH: clean($('e-ceil').value), mountH: clean($('e-mh').value), ceilSpace: clean($('e-space').value), hMethod: $('e-hm').value,
     mount: $('e-mount').value, difficulty: $('e-diff').value,
     access: Array.prototype.filter.call(document.querySelectorAll('#e-access input'), function (c) { return c.checked; }).map(function (c) { return c.value; }),
-    plate: $('e-plate').value, reuse: $('e-reuse').value, repair: $('e-repair').value, wet: $('e-wet').value, notes: $('e-notes').value.trim()
+    plate: $('e-plate').value, reuse: $('e-reuse').value, repair: $('e-repair').value, wet: $('e-wet').value, notes: $('e-notes').value.trim(),
+    single: readSingle()
   };
 }
 function fixtureFormEmpty(f) {
-  return (!f.symbol || f.symbol === E.autoSym) && !f.kind && !f.maker && !f.model && !f.lamp && !f.ballast && !f.battery && !f.watt && !Object.keys(f.dims).length;
+  return (!f.symbol || f.symbol === E.autoSym) && !f.kind && !f.maker && !f.model && !f.drawingModel && !f.lamp && !f.ballast && !f.battery && !f.watt && !Object.keys(f.dims).length;
 }
 function editorErr(msg) { var e = $('e-err'); e.textContent = msg; e.hidden = !msg; if (msg) e.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
 
@@ -1824,6 +2609,7 @@ async function saveEditor() {
     if (!fx && !editorPhotos().length) return editorErr('器具記号を入れるか、写真を1枚以上登録してください。');
     rec = Object.assign({}, E.rec, rf, { fixtureId: fx ? fx.id : null, status: fx ? 'ok' : 'photo', updatedAt: now });
     if (!fx) rec.qty = null;
+    else if (rec.plan == null || rec.qty !== E.rec.qty) { rec.cnt = rec.qty; if (rec.plan != null) rec.plan = rec.qty; }
     ops.push(['put', 'records', rec]);
     editorPhotos().forEach(function (p) {
       var np = Object.assign({}, p, { fixtureId: fx ? fx.id : null, level: rec.level, place: rec.place });
@@ -1927,7 +2713,7 @@ async function offerDraft(d) {
   if (typeof d.openedNew === 'boolean') E.openedNew = d.openedNew;
   var f = d.fx || {};
   $('e-symbol').value = f.symbol || ''; $('e-kind').value = f.kind || ''; $('e-maker').value = f.maker || '';
-  $('e-model').value = f.model || ''; $('e-lamp').value = f.lamp || ''; $('e-ballast').value = f.ballast || '';
+  $('e-model').value = f.model || ''; $('e-dmodel').value = f.drawingModel || ''; updateDiffVis(); $('e-lamp').value = f.lamp || ''; $('e-ballast').value = f.ballast || '';
   $('e-src').value = f.source || ''; $('e-out').value = f.output || ''; updateOutVis();
   setCct($('e-cct'), f.cct || ''); $('e-cctm').value = f.cctMethod || ''; $('e-watt').value = f.watt || ''; $('e-volt').value = f.volt || '';
   $('e-battery').value = f.battery || ''; $('e-batspec').value = f.batterySpec || ''; updateBatVis();
@@ -1936,10 +2722,11 @@ async function offerDraft(d) {
   if (d.rec) {
     var r = d.rec;
     $('e-level').value = r.level || S.p.current.level; $('e-place').value = r.place || ''; $('e-qty').value = r.qty == null ? '' : r.qty;
-    $('e-lit').value = r.lit || ''; $('e-det').value = r.det || ''; $('e-ceil').value = r.ceilH || ''; $('e-mh').value = r.mountH || ''; $('e-hm').value = r.hMethod || '';
+    $('e-lit').value = r.lit || ''; $('e-det').value = r.det || ''; $('e-ceil').value = r.ceilH || ''; $('e-mh').value = r.mountH || ''; $('e-space').value = r.ceilSpace || ''; $('e-hm').value = r.hMethod || '';
     $('e-mount').value = r.mount || ''; $('e-diff').value = r.difficulty || '';
     document.querySelectorAll('#e-access input').forEach(function (c) { c.checked = (r.access || []).indexOf(c.value) >= 0; });
     $('e-plate').value = r.plate || ''; $('e-reuse').value = r.reuse || ''; $('e-repair').value = r.repair || ''; $('e-wet').value = r.wet || ''; $('e-notes').value = r.notes || '';
+    if (r.single) { loadSingle(r.single); renderSingleEditor(); }
   }
   E.cands = d.cands || E.cands; E.dirty = true;
   markUnc(); updateFxNote(); renderLinks(); renderCands(); renderEditorPhotos();
@@ -2375,16 +3162,19 @@ async function saveFile(name, data, mime) {
   return 'saved';
 }
 function dateTag() { var d = new Date(); return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()); }
+function timeTag() { var d = new Date(); return pad(d.getHours()) + pad(d.getMinutes()); }
 async function exportLedgerCsv() {
-  var head = ['案件', '階', '設置場所', '器具記号', '器具種類', '区分', 'メーカー', '器具型番', 'ランプ型番', '安定器型番', 'バッテリー型番', 'バッテリー電圧・容量', '光源の種類', '出力（定格／高出力）', '数量', '色温度・光色', '高演色型', '色温度の確認方法', '消費電力(W)', '電源電圧',
-    '外形寸法', '埋込穴径', '埋込寸法', '埋込深さ', '取付ピッチ', '点灯状況', '劣化状況', '天井高さ(m)', '取付高さ(m)', '高さの確認方法', '取付方式', '交換難易度', '必要な機材',
-    'リニューアルプレート', '既設開口の利用', '補修', '防水・防湿', '施工上の注意', '雰囲気重視', '仕様書URL', 'LED更新候補', '写真枚数', '要確認', '帰社後に調べる', '記録の状態', '更新日時'];
+  var head = ['案件', '階', '設置場所', '器具記号', '器具種類', '区分', 'メーカー', '器具型番', '図面の型番', '図面との相違', 'ランプ型番', '安定器型番', 'バッテリー型番', 'バッテリー電圧・容量', '光源の種類', '出力（定格／高出力）', '数量', '予定数', '現地確認', '色温度・光色', '高演色型', '色温度の確認方法', '消費電力(W)', '電源電圧',
+    '仕上り外径', '開口（φ）', '開口（W×D）', '埋込深さ', '取付ピッチ', '点灯状況', '劣化状況', '天井高さ(m)', '取付高さ(m)', '天井内の有効高さ(mm)', '高さの確認方法', '取付方式', '交換難易度', '必要な機材',
+    'リニューアルプレート', '既設開口の利用', '補修', '防水・防湿', '施工上の注意', '調査の種類', '症状', '確認したこと', '原因（推定）', 'その場の処置', '今後の対応（提案）', '使用用途', 'そのまま交換', '所見', '雰囲気重視', '仕様書URL', 'LED更新候補', '写真枚数', '要確認', '帰社後に調べる', '記録の状態', '更新日時'];
   var rows = [head];
   S.records.slice().sort(function (a, b) { return lvRank(a.level) - lvRank(b.level) || (a.place || '').localeCompare(b.place || '', 'ja') || ((fxById(a.fixtureId) || {}).symbol || '').localeCompare((fxById(b.fixtureId) || {}).symbol || ''); }).forEach(function (r) {
     var f = fxById(r.fixtureId) || {}, d = f.dims || {};
-    rows.push([S.p.name, lvLabel(r.level), r.place, f.symbol, kindName(f.kind), f.kind ? CAT[catOf(f)] : '', makerName(f.maker), f.model, f.lamp, f.ballast, f.battery, f.batterySpec, f.source, f.output, r.fixtureId ? r.qty : '', isBodyColor(f.cct) ? '' : f.cct, f.highCri ? '○' : '', f.cctMethod, f.watt, f.volt,
-      d.outer, d.cutout, d.cutoutWD, d.depth, d.pitch, r.lit, r.det, r.ceilH, r.mountH, r.hMethod, r.mount, r.difficulty, (r.access || []).join('・'),
-      r.plate, r.reuse, r.repair, r.wet, r.notes, f.ambience ? '○' : '', f.spec, (f.cands || []).map(function (c) { return c.model; }).filter(Boolean).join(' / '),
+    rows.push([S.p.name, lvLabel(r.level), r.place, f.symbol, kindName(f.kind), f.kind ? CAT[catOf(f)] : '', makerName(f.maker), f.model, f.drawingModel, fxDiff(f) ? '相違' : '', f.lamp, f.ballast, f.battery, f.batterySpec, f.source, f.output, r.fixtureId ? r.qty : '', r.plan == null ? '' : r.plan, r.fixtureId ? countLabel(r) : '', isBodyColor(f.cct) ? '' : f.cct, f.highCri ? '○' : '', f.cctMethod, f.watt, f.volt,
+      d.outer, d.cutout, d.cutoutWD, d.depth, d.pitch, r.lit, r.det, r.ceilH, r.mountH, r.ceilSpace, r.hMethod, r.mount, r.difficulty, (r.access || []).join('・'),
+      r.plate, r.reuse, r.repair, r.wet, r.notes,
+      r.single ? sgKindLabel(r.single.kind) : '', r.single ? (r.single.symptoms || []).join('・') : '', r.single ? (r.single.checks || []).join('・') : '', r.single ? (r.single.causes || []).join('・') : '', r.single ? (r.single.done || []).join('・') : '', r.single ? (r.single.proposals || []).join('・') : '', r.single ? r.single.usage || '' : '', r.single ? r.single.swap || '' : '', r.single ? r.single.memo || '' : '',
+      f.ambience ? '○' : '', f.spec, (f.cands || []).map(function (c) { return c.model; }).filter(Boolean).join(' / '),
       photosOfRecord(r.id).length, [f.model, f.lamp, f.ballast].some(hasQ) ? '読めない文字あり' : '', f.needLookup ? '○' : '', r.fixtureId ? '記録済' : '未整理（写真のみ）', stamp(r.updatedAt)]);
   });
   await doSave('器具台帳_' + fileSafe(S.p.name) + '_' + dateTag() + '.csv', csvText(rows), 'text/csv');
@@ -2392,8 +3182,8 @@ async function exportLedgerCsv() {
 async function exportSummaryCsv() {
   var s = summarize(), rows = [['■ 器具種類別'], ['区分', '器具種類', '数量']];
   Object.keys(s.byKind).sort().forEach(function (k) { var p = k.split('|'); rows.push([CAT[p[0]], p[1], s.byKind[k]]); });
-  rows.push(['合計', '', s.total], [], ['■ 器具記号別'], ['器具記号', '器具種類', 'メーカー', '器具型番', 'ランプ型番', '数量']);
-  sortedFixtures().forEach(function (f) { rows.push([f.symbol, kindName(f.kind), makerName(f.maker), f.model, f.lamp, fixtureTotals(f.id).q]); });
+  rows.push(['合計', '', s.total], [], ['■ 器具記号別'], ['器具記号', '器具種類', 'メーカー', '器具型番', '図面の型番', '図面との相違', 'ランプ型番', '数量']);
+  sortedFixtures().forEach(function (f) { rows.push([f.symbol, kindName(f.kind), makerName(f.maker), f.model, f.drawingModel, fxDiff(f) ? '相違' : '', f.lamp, fixtureTotals(f.id).q]); });
   var syms = sortedFixtures().map(function (f) { return f.symbol; });
   rows.push([], ['■ 階別'], ['階'].concat(syms, ['計']));
   Object.keys(s.byLevel).sort(function (a, b) { return lvRank(a) - lvRank(b); }).forEach(function (l) {
@@ -2476,7 +3266,8 @@ async function buildBackup(pids) {
       if (!d) continue;
       var rec = recs.find(function (r) { return r.id === ph.recordId; });
       var f = fxMap[ph.fixtureId] || {};
-      var fname = folder + '/photos/' + fileSafe([lvLabel(ph.level), ph.place, f.symbol || '未整理', ph.kind].filter(Boolean).join('_')) + '_' + ph.id.slice(-6) + '.jpg';
+      var fname = isDrawing(ph) ? folder + '/drawings/' + fileSafe(ph.dwName || '図面') + '_' + ph.id.slice(-6) + '.jpg'
+        : folder + '/photos/' + fileSafe([lvLabel(ph.level), ph.place, f.symbol || '未整理', ph.kind].filter(Boolean).join('_')) + '_' + ph.id.slice(-6) + '.jpg';
       files.push({ name: fname, data: new Uint8Array(d.data) });
       files.push({ name: folder + '/thumbs/' + ph.id + '.jpg', data: new Uint8Array(ph.thumb) });
       var meta = Object.assign({}, ph); delete meta.thumb; meta.file = fname; meta.thumbFile = folder + '/thumbs/' + ph.id + '.jpg';
@@ -2492,13 +3283,394 @@ async function exportBackup(pids) {
   try {
     var b = await buildBackup(pids);
     var p0 = b.manifest.projects[0];
-    var name = 'LED調査バックアップ_' + (pids.length === 1 && p0 ? fileSafe(p0.project.name) : '全案件') + '_' + dateTag() + '.zip';
+    // 名前は「案件名_日付_時刻」。同じ日に何度作っても、どれが新しいか分かる
+    var name = 'LED調査_' + (pids.length === 1 && p0 ? fileSafe(p0.project.name) : '全案件') + '_' + dateTag() + '_' + timeTag() + '.zip';
     var r = await saveFile(name, b.zip, 'application/zip');
     if (r === 'saved') {
-      toast('バックアップを書き出しました（写真 ' + b.manifest.projects.reduce(function (s, x) { return s + x.photos.length; }, 0) + '枚）');
+      for (var bi = 0; bi < pids.length; bi++) { try { await setMeta('bk_' + pids[bi], Date.now()); if (S.bk) S.bk[pids[bi]] = Date.now(); } catch (e) {} }
+      toast('バックアップを書き出しました：' + name + '（写真 ' + b.manifest.projects.reduce(function (s, x) { return s + x.photos.length; }, 0) + '枚）。LAN DISK Xに保存したら、案件一覧の「中身を確かめる」で確認できます');
       try { await setMeta('lastBackup', Date.now()); } catch (e) {}
     }
-  } catch (e) { toast('バックアップを作成できませんでした：' + errText(e), true); }
+    return { r: r, name: name };
+  } catch (e) { toast('バックアップを作成できませんでした：' + errText(e), true); return null; }
+}
+/* ====================================================================
+   単発調査（1台〜数台）：不具合の調査／交換の調査。結果は管理会社向けの報告書にする
+   - 案件 p.type === 'single'。依頼情報は p.single に入れる
+   - 調査1件 = 記録1件（記号は No.1、No.2…）。調査の中身は record.single に入れる
+   ==================================================================== */
+var SG = {
+  symptoms: ['不点', 'ちらつき', '点灯が遅い', '暗い', '異音', '焦げ・臭い', '破損・落下の恐れ', '水の侵入', 'その他'],
+  checks: ['ランプ交換で直った', 'ランプ交換で直らない', '電圧あり', '電圧なし', '安定器・電源の異常', '器具の劣化', '配線・接続の異常', 'スイッチ・センサーの異常'],
+  causes: ['ランプの寿命', '安定器・電源装置の故障', '器具の劣化', '配線・接続の不良', 'スイッチ・センサー・タイマーの不良', '浸水', '不明（要再調査）'],
+  done: ['その場でランプ交換', 'その場で部品交換', '応急処置', '処置なし'],
+  proposals: ['ランプ交換', '安定器・電源装置の交換', '器具交換（同等品）', '器具交換（LED化）', '部品手配', '再調査', '経過観察'],
+  usage: ['用途に合っている', '要検討（明るさ）', '要検討（防雨・防湿）', '要検討（その他）'],
+  swap: ['そのまま交換できる', '加工が必要', 'そのままでは交換できない（別の器具を検討）', '未確認']
+};
+var SG_MULTI = { symptoms: 1, checks: 1, causes: 1, done: 1, proposals: 1 };
+function isSingle() { return !!(S.p && S.p.type === 'single'); }
+function sgKindLabel(k) { return k === 'replace' ? '交換の調査' : '不具合の調査'; }
+// 記録画面の「調査の内容」欄
+var SGE = { kind: 'fault', v: {} };
+function renderSingleEditor() {
+  var card = $('e-single'); card.replaceChildren();
+  card.hidden = !(isSingle() && E && E.mode === 'record');
+  if (card.hidden) return;
+  function group(key, label) {
+    var box = h('div', { class: 'chipsel', role: 'group', 'aria-label': label });
+    SG[key].forEach(function (o) {
+      var on = SG_MULTI[key] ? (SGE.v[key] || []).indexOf(o) >= 0 : SGE.v[key] === o;
+      box.append(h('button', { type: 'button', 'aria-pressed': String(on), text: o, onclick: function () {
+        if (SG_MULTI[key]) { var a = (SGE.v[key] || []).slice(), i = a.indexOf(o); if (i >= 0) a.splice(i, 1); else a.push(o); SGE.v[key] = a; }
+        else SGE.v[key] = SGE.v[key] === o ? '' : o;
+        E.dirty = true; renderSingleEditor(); scheduleDraft();
+      } }));
+    });
+    return h('div', { class: 'f' }, label, box);
+  }
+  var memo = h('textarea', { 'aria-label': '所見', placeholder: SGE.kind === 'replace' ? '例：既設と同じ開口でLED器具に交換可能。天井内の有効高さ120mmのため薄型器具を選定。' : '例：ランプ交換後も点灯せず。安定器の出力なし。器具の劣化が進んでいるため、LED器具への交換を推奨。' });
+  memo.value = SGE.v.memo || '';
+  memo.addEventListener('input', function () { SGE.v.memo = memo.value; E.dirty = true; scheduleDraft(); });
+  card.append(h('h2', { text: '調査の内容' }),
+    h('div', { class: 'seg' }, ['fault', 'replace'].map(function (k) {
+      return h('button', { type: 'button', 'aria-pressed': String(SGE.kind === k), text: sgKindLabel(k), onclick: function () { SGE.kind = k; E.dirty = true; renderSingleEditor(); scheduleDraft(); } });
+    })));
+  if (SGE.kind === 'fault') card.append(group('symptoms', '症状（依頼内容と現地で確認した症状）'), group('checks', '確認したこと'), group('causes', '原因（推定）'), group('done', 'その場の処置'), group('proposals', '今後の対応（提案）'));
+  else card.append(h('p', { class: 'note', text: '今の仕様（型番・ランプ・色温度・電圧）、開口・仕上り外径、天井内の有効高さは、上の「器具の仕様」と「施工条件」に入れてください。報告書にも載ります。' }),
+    group('usage', '使用用途に合っているか'), group('swap', 'そのまま交換できるか（施工方法）'), group('proposals', '今後の対応（提案）'));
+  card.append(h('label', { class: 'f' }, '所見（報告書に載ります）', memo));
+}
+function readSingle() { return isSingle() ? Object.assign({ kind: SGE.kind }, JSON.parse(JSON.stringify(SGE.v))) : undefined; }
+function loadSingle(sg, kind) { SGE.kind = (sg && sg.kind) || kind || 'fault'; SGE.v = sg ? JSON.parse(JSON.stringify(sg)) : {}; delete SGE.v.kind; }
+function nextSingleSymbol() {
+  var used = {}; S.fixtures.forEach(function (f) { used[f.symbol] = 1; });
+  for (var i = 1; i < 1000; i++) if (!used['No.' + i]) return 'No.' + i;
+  return '';
+}
+function sgSummary(r) {
+  var s = r.single || {};
+  if (s.kind === 'replace') return [s.swap, s.usage, (s.proposals || []).join('・')].filter(Boolean).join('／') || '（未入力）';
+  return [(s.symptoms || []).join('・'), (s.causes || []).join('・'), (s.proposals || []).join('・')].filter(Boolean).join('／') || '（未入力）';
+}
+// 単発調査の画面（調査画面の代わり）
+function renderSingle() {
+  var p = S.p, info = p.single || {};
+  var wrap = h('div', { style: 'display:flex;flex-direction:column;gap:12px' });
+  function inp(key, label, ph, type) {
+    var el = h(type === 'area' ? 'textarea' : 'input', type === 'area' ? { placeholder: ph } : { type: type || 'text', placeholder: ph, autocomplete: 'off' });
+    el.value = info[key] || (key === 'date' ? new Date().toISOString().slice(0, 10) : '');
+    el.addEventListener('change', function () { var n = Object.assign({}, S.p.single || {}); n[key] = el.value.trim(); saveProject({ single: n }); });
+    return h('label', { class: 'f' }, label, el);
+  }
+  if (!info.date) setTimeout(function () { var n = Object.assign({}, S.p.single || {}); if (!n.date) { n.date = new Date().toISOString().slice(0, 10); saveProject({ single: n }); } }, 0);
+  wrap.append(h('div', { class: 'card' }, h('h2', { text: '依頼の情報' }),
+    inp('client', '依頼元（管理会社）', '例：○○管理株式会社'),
+    inp('request', '依頼内容', '例：3階共用廊下のダウンライトが点かない', 'area'),
+    h('div', { class: 'grid2' }, inp('date', '調査日', '', 'date'), inp('reporter', '報告者（会社名・担当）', '例：△△電気 山田'))));
+  var items = S.records.filter(function (r) { return r.fixtureId; }).sort(function (a, b) { return a.createdAt - b.createdAt; });
+  var list = h('div', { class: 'list' });
+  items.forEach(function (r) {
+    var f = fxById(r.fixtureId) || {}, ph = photosOfRecord(r.id), s = r.single || {};
+    list.append(h('button', { type: 'button', class: 'item', style: 'text-align:left;width:100%', onclick: function () { openEditor({ recordId: r.id }); } },
+      h('span', { class: 'sym', text: f.symbol || '' }),
+      h('span', { class: 'body' },
+        h('span', { class: 't', text: (r.place || '（場所未入力）') + '　' + sgKindLabel(s.kind) }),
+        h('span', { class: 's', text: [makerName(f.maker), f.model].filter(Boolean).join(' ') || '型番未入力' }),
+        h('span', { class: 's', text: sgSummary(r) })),
+      ph.length ? h('span', { class: 'mini' }, ph.slice(0, 2).map(function (x) { return thumbImg(x); })) : null));
+  });
+  wrap.append(h('div', { class: 'group-h' }, h('h3', { text: '調査した器具' }), h('span', { class: 'note', text: items.length + '件' })),
+    items.length ? list : h('div', { class: 'empty', text: 'まだありません。下のボタンから追加してください。1台でも数台でも記録できます。' }),
+    h('div', { class: 'grid2' },
+      h('button', { type: 'button', class: 'primary big', text: '＋ 不具合の調査', onclick: function () { openEditor({ single: 'fault' }); } }),
+      h('button', { type: 'button', class: 'primary big', text: '＋ 交換の調査', onclick: function () { openEditor({ single: 'replace' }); } })),
+    h('div', { class: 'card' }, h('h2', { text: '報告・保存' }),
+      h('button', { type: 'button', class: 'primary', text: '管理会社向けの報告書を作る', disabled: !items.length, onclick: openReport }),
+      h('button', { type: 'button', text: '会社に保存する（写真ごとバックアップ .zip）', onclick: function () { saveFlow(); } }),
+      h('button', { type: 'button', text: '台帳CSV（Excelで開く）', onclick: exportLedgerCsv }),
+      h('p', { class: 'note', text: '報告書は画面で確かめてから「PDFを作る」でPDFにできます。PDFは管理会社へメールなどで送れます。' })));
+  return wrap;
+}
+/* ---------- 管理会社向けの報告書 ----------
+   画面で確かめてから「PDFを作る」。PDFはアプリの中で作る（印刷の画面を使わないので、ホーム画面のアプリでも圏外でも動く） */
+function reportData() {
+  var p = S.p, info = p.single || {};
+  var items = S.records.filter(function (r) { return r.fixtureId; }).sort(function (a, b) { return a.createdAt - b.createdAt; });
+  function rows(list) { return list.filter(function (x) { return x[1]; }); }
+  var out = { title: '照明設備 調査報告書', head: rows([['宛先', info.client ? info.client + '　御中' : ''], ['物件名', p.name], ['調査日', info.date || ''], ['依頼内容', info.request || ''], ['報告者', info.reporter || ''], ['調査件数', items.length + '件']]), items: [] };
+  var order = ['器具全体', '銘板', 'ランプ', '取付状況', 'その他', '寸法確認', '仕様書'];
+  items.forEach(function (r, i) {
+    var f = fxById(r.fixtureId) || {}, s = r.single || {}, d = f.dims || {};
+    var phs = photosOfRecord(r.id).filter(function (x) { return !isDrawing(x); }).sort(function (a, b) { return order.indexOf(a.kind) - order.indexOf(b.kind) || a.createdAt - b.createdAt; }).slice(0, 4);
+    var list = [['設置場所', r.place || ''], ['器具', [kindName(f.kind), [makerName(f.maker), f.model].filter(Boolean).join(' ')].filter(Boolean).join('　')],
+      ['ランプ', [f.lamp, f.source, isBodyColor(f.cct) ? '' : f.cct].filter(Boolean).join('　')], ['電源電圧', f.volt], ['数量', r.qty > 1 ? r.qty + '台' : '']];
+    if (s.kind === 'replace') list = list.concat([['開口', d.cutout || d.cutoutWD || ''], ['仕上り外径', d.outer || ''], ['天井内の有効高さ', r.ceilSpace ? r.ceilSpace + 'mm' : ''],
+      ['取付方式', r.mount], ['設置環境', r.wet], ['使用用途', s.usage], ['そのまま交換できるか', s.swap], ['施工上の注意', r.notes]]);
+    else list = list.concat([['症状', (s.symptoms || []).join('、')], ['確認したこと', (s.checks || []).join('、')], ['原因（推定）', (s.causes || []).join('、')], ['その場の処置', (s.done || []).join('、')]]);
+    list = list.concat([['今後の対応（提案）', (s.proposals || []).join('、')], ['所見', s.memo || '']]);
+    out.items.push({ title: (f.symbol || 'No.' + (i + 1)) + '　' + sgKindLabel(s.kind), rows: rows(list), photos: phs });
+  });
+  return out;
+}
+async function openReport() {
+  var R = reportData(), urls = [];
+  async function img(ph) { try { var u = URL.createObjectURL(await photoBlob(ph.id)); urls.push(u); return h('img', { src: u, alt: ph.kind }); } catch (e) { return h('div', { class: 'rnoimg', text: '写真を読めませんでした' }); } }
+  function table(cls, rows) { return h('table', { class: cls }, rows.map(function (x) { return h('tr', {}, h('th', { text: x[0] }), h('td', { text: x[1] })); })); }
+  var body = h('div', { class: 'rbody' }, h('h1', { text: R.title }), table('rhead', R.head));
+  for (var i = 0; i < R.items.length; i++) {
+    var it = R.items[i], pics = h('div', { class: 'rpics' });
+    for (var j = 0; j < it.photos.length; j++) pics.append(h('figure', {}, await img(it.photos[j]), h('figcaption', { text: it.photos[j].kind })));
+    body.append(h('section', { class: 'ritem' }, h('h2', { text: it.title }), table('rtbl', it.rows), it.photos.length ? pics : null));
+  }
+  body.append(h('p', { class: 'rfoot', text: '作成：' + stamp(Date.now()) }));
+  function close() { rep.remove(); urls.forEach(function (u) { URL.revokeObjectURL(u); }); document.documentElement.classList.remove('reporting'); }
+  var pdfBtn = h('button', { type: 'button', class: 'primary', text: 'PDFを作る（保存・送信）', onclick: once(async function () {
+    pdfBtn.disabled = true; var old = pdfBtn.textContent; pdfBtn.textContent = 'PDFを作っています…';
+    try {
+      var blob = await reportPdf(R);
+      var name = '調査報告書_' + fileSafe(S.p.name) + '_' + ((S.p.single || {}).date || dateTag()).replace(/-/g, '') + '.pdf';
+      var r = await saveFile(name, blob, 'application/pdf');
+      if (r === 'saved') toast('PDFを作りました：' + name + '（' + Math.round(blob.size / 1024) + 'KB）');
+    } catch (e) { toast('PDFを作れませんでした：' + errText(e), true); }
+    finally { pdfBtn.disabled = false; pdfBtn.textContent = old; }
+  }) });
+  var rep = h('div', { class: 'report', role: 'dialog', 'aria-label': '報告書' },
+    h('div', { class: 'rbar noprint' }, pdfBtn,
+      h('button', { type: 'button', class: 'small', text: '印刷', onclick: function () { window.print(); } }),
+      h('button', { type: 'button', text: '閉じる', onclick: close })),
+    h('p', { class: 'note noprint', style: 'margin:0 0 8px', text: '内容を確かめてから「PDFを作る」を押してください。保存先を選ぶ画面で「"ファイル"に保存」やメールを選べます。宛先・調査日などは単発調査の画面の「依頼の情報」で直せます。' }),
+    body);
+  document.documentElement.classList.add('reporting');
+  document.body.append(rep);
+}
+/* 報告書をA4の画像に描き、画像を並べたPDFを作る（文字は端末の日本語フォントで描く） */
+async function reportPdf(R) {
+  var W = 1240, H = 1754, M = 80, LW = 300, FS = 26, LH = 40, CW = W - M * 2;
+  var FONT = '"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans CJK JP","Noto Sans JP","Yu Gothic",Meiryo,sans-serif';
+  var pages = [], c, g, y;
+  function newPage() {
+    if (c) pages.push(c);
+    c = document.createElement('canvas'); c.width = W; c.height = H; g = c.getContext('2d');
+    g.fillStyle = '#fff'; g.fillRect(0, 0, W, H); g.textBaseline = 'top'; y = M;
+  }
+  function font(px, bold) { g.font = (bold ? '700 ' : '400 ') + px + 'px ' + FONT; }
+  function wrap(text, width) {   // 日本語は1文字ずつ、改行も守る
+    var lines = [];
+    String(text).split('\n').forEach(function (para) {
+      var cur = '';
+      Array.from(para).forEach(function (ch) { if (g.measureText(cur + ch).width > width && cur) { lines.push(cur); cur = ch; } else cur += ch; });
+      lines.push(cur);
+    });
+    return lines;
+  }
+  function room(hh) { if (y + hh > H - M - 30) newPage(); }
+  function table(rows) {
+    rows.forEach(function (x) {
+      font(FS, false); var vl = wrap(x[1], CW - LW - 24); font(FS, true); var ll = wrap(x[0], LW - 24);
+      var hh = Math.max(vl.length, ll.length) * LH + 16;
+      room(hh);
+      g.fillStyle = '#eef2f5'; g.fillRect(M, y, LW, hh);
+      g.strokeStyle = '#888'; g.lineWidth = 1.5; g.strokeRect(M, y, LW, hh); g.strokeRect(M + LW, y, CW - LW, hh);
+      g.fillStyle = '#111'; font(FS, true); ll.forEach(function (t, i) { g.fillText(t, M + 12, y + 10 + i * LH); });
+      font(FS, false); vl.forEach(function (t, i) { g.fillText(t, M + LW + 12, y + 10 + i * LH); });
+      y += hh;
+    });
+  }
+  async function photos(list) {
+    var cw = (CW - 30) / 2, ph = 420, capH = 40;
+    for (var i = 0; i < list.length; i += 2) {
+      room(ph + capH + 10);
+      for (var j = 0; j < 2 && i + j < list.length; j++) {
+        var x = M + j * (cw + 30), p = list[i + j];
+        g.fillStyle = '#f2f2f2'; g.fillRect(x, y, cw, ph); g.strokeStyle = '#bbb'; g.strokeRect(x, y, cw, ph);
+        try {
+          var li = await loadImage(await photoBlob(p.id));
+          var s = Math.min(cw / li.img.naturalWidth, ph / li.img.naturalHeight), dw = li.img.naturalWidth * s, dh = li.img.naturalHeight * s;
+          g.drawImage(li.img, x + (cw - dw) / 2, y + (ph - dh) / 2, dw, dh); URL.revokeObjectURL(li.url);
+        } catch (e) { g.fillStyle = '#666'; font(22, false); g.fillText('写真を読めませんでした', x + 20, y + 20); }
+        g.fillStyle = '#555'; font(22, false); var tw = g.measureText(p.kind).width; g.fillText(p.kind, x + (cw - tw) / 2, y + ph + 8);
+      }
+      y += ph + capH + 10;
+    }
+  }
+  newPage();
+  font(44, true); g.fillStyle = '#111'; var tw = g.measureText(R.title).width; g.fillText(R.title, (W - tw) / 2, y); y += 80;
+  table(R.head); y += 30;
+  for (var i = 0; i < R.items.length; i++) {
+    var it = R.items[i];
+    room(LH * 3 + 30);
+    g.fillStyle = '#0b5c8a'; g.fillRect(M, y + 2, 10, 36); g.fillStyle = '#111'; font(32, true); g.fillText(it.title, M + 22, y); y += 54;
+    table(it.rows); y += 16;
+    await photos(it.photos); y += 26;
+  }
+  font(20, false); g.fillStyle = '#666'; var ft = '作成：' + stamp(Date.now()); g.fillText(ft, W - M - g.measureText(ft).width, Math.min(y, H - M - 24));
+  pages.push(c);
+  // ページ番号
+  pages.forEach(function (pc, i) { var gg = pc.getContext('2d'); gg.font = '400 20px ' + FONT; gg.fillStyle = '#666'; gg.textBaseline = 'top'; var t = (i + 1) + ' / ' + pages.length; gg.fillText(t, (W - gg.measureText(t).width) / 2, H - M + 20); });
+  var jpgs = [];
+  for (var k = 0; k < pages.length; k++) { jpgs.push(new Uint8Array(await (await canvasJpeg(pages[k], 0.85)).arrayBuffer())); pages[k].width = pages[k].height = 0; }
+  return buildPdf(jpgs, W, H);
+}
+// JPEG画像を1ページに1枚ずつ並べたPDF（A4縦）
+function buildPdf(jpgs, w, h) {
+  var enc = new TextEncoder(), parts = [], len = 0, offs = [];
+  function put(x) { var b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; }
+  function obj(n, body) { offs[n] = len; put(n + ' 0 obj\n'); body.forEach(put); put('\nendobj\n'); }
+  var n = jpgs.length, kids = [];
+  for (var i = 0; i < n; i++) kids.push((3 + i * 3) + ' 0 R');
+  put('%PDF-1.4\n%\xE2\xE3\xCF\xD3\n');
+  obj(1, ['<< /Type /Catalog /Pages 2 0 R >>']);
+  obj(2, ['<< /Type /Pages /Kids [' + kids.join(' ') + '] /Count ' + n + ' >>']);
+  for (var j = 0; j < n; j++) {
+    var po = 3 + j * 3, io = po + 1, co = po + 2, cs = 'q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+    obj(po, ['<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 ' + io + ' 0 R >> >> /Contents ' + co + ' 0 R >>']);
+    obj(io, ['<< /Type /XObject /Subtype /Image /Width ' + w + ' /Height ' + h + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + jpgs[j].length + ' >>\nstream\n', jpgs[j], '\nendstream']);
+    obj(co, ['<< /Length ' + cs.length + ' >>\nstream\n' + cs + '\nendstream']);
+  }
+  var total = 3 + n * 3, xref = len;
+  var x = 'xref\n0 ' + total + '\n0000000000 65535 f \n';
+  for (var k = 1; k < total; k++) x += String(offs[k]).padStart(10, '0') + ' 00000 n \n';
+  put(x + 'trailer\n<< /Size ' + total + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n');
+  return new Blob(parts, { type: 'application/pdf' });
+}
+/* ---------- 「次にやること」カード：案件の状態を見て、次の操作を1つだけ大きく出す ----------
+   ① 資料がある：図面を入れる → 記号を登録 → 前の階をコピー（予定）→ 数える
+   ② 現場で資料を見つけた：図面を撮る → 記号を登録 → 数える
+   ③ 資料がない：最初の器具を「＋ 器具を記録」→ 数える
+   数えている間は、カードを出さない（数える画面の邪魔をしない）。 */
+function bkInfo(pid) {
+  if (!S.bk) S.bk = {};
+  if (!(pid in S.bk)) { S.bk[pid] = null; getMeta('bk_' + pid).then(function (v) { S.bk[pid] = v || 0; if (S.p && S.p.id === pid && !$('v-survey').hidden) renderSurvey(); }).catch(function () { S.bk[pid] = 0; }); }
+  return S.bk[pid];
+}
+function nextStepCard() {
+  var lv = S.p.current.level, recsLv = S.records.filter(function (r) { return r.level === lv; });
+  var nFx = S.fixtures.length, hasDw = drawings().length > 0, plans = plansOf(lv);
+  var card = h('div', { class: 'card nextstep' });
+  if (!nFx && !S.records.length) {
+    card.append(h('h2', { text: '次にやること：準備' }),
+      h('p', { class: 'note', text: hasDw ? '図面が入りました。図面を見ながら器具記号を登録してください。' : '資料（図面・器具表）があるかで始め方が変わります。' }));
+    if (hasDw) card.append(h('button', { type: 'button', class: 'primary big', text: '図面を見ながら器具記号を登録', onclick: function () { S.tab = 'fixtures'; renderSurvey(); bulkFixtureSheet(); } }),
+      h('button', { type: 'button', text: '図面を見る・追加する', onclick: drawingSheet }));
+    else card.append(
+      h('button', { type: 'button', class: 'primary', text: '資料がある → 図面を入れる（PDF・撮影）', onclick: drawingSheet }),
+      h('button', { type: 'button', text: '器具表だけある → 器具記号をまとめて登録', onclick: function () { S.tab = 'fixtures'; renderSurvey(); bulkFixtureSheet(); } }),
+      h('button', { type: 'button', text: '資料がない → 最初の器具を記録（記号は A、B…）', onclick: function () { openEditor({}); } }));
+    return card;
+  }
+  var lines = [];
+  if (!recsLv.length && nFx) {
+    var src = copySourceLevel();
+    card.append(h('h2', { text: '次にやること：' + lvLabel(lv) + 'を始める' }));
+    if (plans.length) card.append(h('button', { type: 'button', text: lvLabel(lv) + 'の平面図を見る', onclick: function () { openFull(plans[0].id); } }));
+    if (src) card.append(h('button', { type: 'button', class: 'primary', text: lvLabel(src) + 'からコピーして予定にする（回って確認）', onclick: function () { copyFloorSheet(src); } }));
+    // 数える画面で場所が未選択なら、下に「設置場所を選ぶ」が出ているので重ねて出さない
+    if (!(S.tab === 'count' && !currentPlace())) card.append(h('button', { type: 'button', class: src ? '' : 'primary', text: '場所を選んで数え始める', onclick: function () { S.tab = 'count'; renderSurvey(); placeSheet(false); } }));
+    return card;
+  }
+  var unc = recsLv.filter(function (r) { return r.fixtureId && !recDone(r); }).length;
+  if (unc && S.tab !== 'count') lines.push(h('div', { class: 'row' }, h('span', { class: 'grow', text: lvLabel(lv) + 'に未確認・予定と違う記録が ' + unc + ' 件' }), h('button', { type: 'button', class: 'small', text: '数える', onclick: function () { S.tab = 'count'; renderSurvey(); } })));
+  var bk = bkInfo(S.p.id);
+  if (bk !== null && S.records.length) {
+    var since = S.records.filter(function (r) { return (r.updatedAt || 0) > (bk || 0); });
+    var lvN = {}; since.forEach(function (r) { lvN[r.level] = 1; });
+    var nLv = Object.keys(lvN).length;
+    var oldest = since.reduce(function (m, r) { return Math.min(m, r.updatedAt || Date.now()); }, Date.now());
+    // 2階分以上たまったか、保存していない記録が90分以上前からあるとき
+    if (since.length && (nLv >= 2 || (Date.now() - oldest > 90 * 60000)))
+      lines.push(h('div', { class: 'row' }, h('span', { class: 'grow', text: (bk ? '前回の保存（' + stamp(bk).slice(5) + '）から ' + nLv + '階分を記録しました。' : 'まだバックアップがありません。') + '保存しておきましょう' }),
+        h('button', { type: 'button', class: 'small primary', text: '保存する', onclick: function () { saveFlow(); } })));
+  }
+  if (!lines.length) return null;
+  card.classList.add('slim'); lines.forEach(function (l) { card.append(l); });
+  return card;
+}
+/* ---------- 会社に保存する：① ZIPを作って保存 → ② 保存したZIPを選んで確かめる → 完了 ---------- */
+async function saveFlow() {
+  var res = await exportBackup([S.p.id]);
+  if (!res || res.r !== 'saved') return;
+  if (window.__ledNoVerifySheet) return;   // 自動試験用（旧テストの手順を変えないため）
+  var pid = S.p.id;
+  var inp = h('input', { type: 'file', class: 'visually-hidden', id: 'flow-verify', accept: '.zip,application/zip' });
+  inp.addEventListener('change', async function (e) {
+    var f = e.target.files && e.target.files[0]; e.target.value = ''; if (!f) return;
+    closeOverlay();
+    await verifyBackup(f, { pid: pid, expect: res.name });
+  });
+  var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '保存したZIPを確かめる' },
+    h('p', { class: 'note', text: '① ZIPを作りました' }),
+    h('h2', { text: '② 保存したZIPを確かめる' }),
+    h('p', { text: '会社のLAN DISK X（ネットワーク ＞ landisk 2hirose ＞ disk1 ＞ 7_社内アプリ ＞ アプリ保存データ ＞ LED調査）に保存したら、そのZIPを選んでください。現場で「このiPhone内」に保存したときは、帰社後にLAN DISK Xへ移してから確かめます。' }),
+    h('div', { class: 'status', style: 'font-family:var(--font-mono);font-weight:700;overflow-wrap:anywhere', text: res.name }),
+    inp, h('label', { class: 'btn primary big', for: 'flow-verify', text: '保存したZIPを選んで確かめる' }),
+    h('button', { type: 'button', text: 'あとで確かめる', onclick: closeOverlay }));
+  overlay(sh);
+}
+/* ---------- バックアップ（ZIP）の中身を確かめる：今のデータは一切変えない ---------- */
+async function verifyBackup(file, opts) {
+  opts = opts || {};
+  var msg = $('h-verify-msg');
+  function say(t, cls) { if (cls === 'err' && t) toast(t, true); msg.hidden = !t; msg.textContent = t || ''; msg.className = 'status' + (cls ? ' ' + cls : ''); }
+  say('確かめています…');
+  var z, man;
+  try {
+    z = await readZip(file);
+    if (!z['backup.json']) throw new Error('このアプリのバックアップではありません（backup.json がありません）');
+    man = JSON.parse(new TextDecoder().decode(z['backup.json']));
+    if (man.format !== 'led-survey-backup') throw new Error('このアプリのバックアップではありません');
+  } catch (e) { say('このZIPは使えません：' + errText(e), 'err'); return null; }
+  say('');
+  var out = [], allOk = true;
+  for (var i = 0; i < man.projects.length; i++) {
+    var pj = man.projects[i], p = pj.project;
+    var phs = pj.photos || [], bad = [], dw = 0;
+    phs.forEach(function (m) {
+      if (isDrawing(m)) dw++;
+      var d = z[m.file];
+      if (!d) bad.push((m.file || m.id) + '（ファイルがない）');
+      else if (!isJpeg(d)) bad.push((m.file || m.id) + '（画像が壊れている）');
+    });
+    var qty = (pj.records || []).reduce(function (s, r) { return s + (r.fixtureId ? (Number(r.qty) || 0) : 0); }, 0);
+    var uns = (pj.records || []).filter(function (r) { return !r.fixtureId; }).length;
+    var cur = await dbGet('projects', p.id), cmp = '', same = false;
+    if (cur) {
+      var curR = await dbByProject('records', p.id), curP = await dbByProject('photos', p.id);
+      var curQ = curR.reduce(function (s, r) { return s + (r.fixtureId ? (Number(r.qty) || 0) : 0); }, 0);
+      same = curR.length === (pj.records || []).length && curP.length === phs.length && curQ === qty;
+      var newer = (cur.updatedAt || 0) > (p.updatedAt || 0) ? 'この端末の方が新しい' : (cur.updatedAt || 0) < (p.updatedAt || 0) ? 'ZIPの方が新しい' : '更新時刻は同じ';
+      var curD = curP.filter(isDrawing).length;
+      cmp = 'この端末の同じ案件：記録 ' + curR.length + '件・' + curQ + '台・写真 ' + (curP.length - curD) + '枚' + (curD ? '・図面 ' + curD + 'ページ' : '') + '（' + newer + '・' + (same ? '件数は一致' : '件数が違う') + '）';
+    } else cmp = 'この端末には同じ案件がありません';
+    if (bad.length) allOk = false;
+    out.push({ pid: p.id, same: same && (cur.updatedAt || 0) === (p.updatedAt || 0), name: p.name, ok: !bad.length, lines: [
+      'ZIPを作った日時：' + (man.exportedAt ? stamp(Date.parse(man.exportedAt)) : '不明') + '（版 ' + (man.app || '?') + '）',
+      '案件の最終更新：' + (p.updatedAt ? stamp(p.updatedAt) : '不明'),
+      '器具記号 ' + (pj.fixtures || []).length + '・記録 ' + (pj.records || []).length + '件・合計 ' + qty + '台' + (uns ? '・未整理 ' + uns + '件' : ''),
+      '写真 ' + (phs.length - dw) + '枚' + (dw ? '・図面 ' + dw + 'ページ' : '') + '：' + (bad.length ? '読めないものが ' + bad.length + ' 件' : 'すべて読めます'),
+      cmp], bad: bad });
+  }
+  var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'バックアップの確認結果' },
+    h('h2', { text: 'バックアップの確認結果' }),
+    h('p', { class: 'note', text: (file.name || '') + '　※確かめただけで、この端末のデータは変えていません。' }),
+    h('div', { class: 'status ' + (allOk ? 'ok' : 'err'), text: allOk ? 'このZIPから戻せます（写真もすべて読めます）。' : 'このZIPには読めない写真があります。このZIPでは戻さず、もう一度バックアップを作ってください。' }));
+  if (opts.pid) {
+    var mine = out.find(function (o) { return o.pid === opts.pid; });
+    var done = allOk && mine && mine.same;
+    if (opts.expect && file.name && file.name !== opts.expect && !/^[0-9a-f-]{36}$/.test(file.name)) sh.append(h('div', { class: 'status err', text: '選んだZIP（' + file.name + '）は、今作ったZIP（' + opts.expect + '）と名前が違います。今作ったZIPを選んでください。' }));
+    if (done) {
+      sh.append(h('div', { class: 'status ok', style: 'font-weight:700;font-size:1.05rem', text: '✓ 会社への保存が完了しました' }));
+      try { await setMeta('vf_' + opts.pid, { at: Date.now(), name: file.name || opts.expect || '' }); } catch (e) {}
+    } else if (allOk && mine) sh.append(h('div', { class: 'status err', text: 'このZIPは今のデータより古いか、件数が違います。もう一度「会社に保存する」からやり直してください。' }));
+    else if (allOk) sh.append(h('div', { class: 'status err', text: 'このZIPにはこの案件が入っていません。' }));
+  }
+  out.forEach(function (o) {
+    sh.append(h('h3', { text: o.name }), h('ul', { class: 'note' }, o.lines.map(function (t) { return h('li', { text: t }); })));
+    if (o.bad.length) sh.append(h('details', {}, h('summary', { text: '読めないファイル（' + o.bad.length + '）' }), h('ul', { class: 'note' }, o.bad.slice(0, 50).map(function (t) { return h('li', { text: t }); }))));
+  });
+  sh.append(h('button', { type: 'button', class: 'primary', text: '閉じる', onclick: function () { closeOverlay(); if (opts.pid && S.p && !$('v-survey').hidden) renderSurvey(); } }));
+  overlay(sh);
+  return { ok: allOk, projects: out };
 }
 async function restoreBackup(file) {
   var msg = $('h-restore-msg');
@@ -2527,9 +3699,12 @@ async function restoreBackup(file) {
   } catch (e) { say('戻せませんでした：' + errText(e), 'bad'); }
 }
 // 既存の同じ案件を消してから、案件・器具・記録・写真をまとめて書き込み、件数を数え直して確認する
-async function importProjectData(pj, getBytes) {
+async function importProjectData(pj, getBytes, opts) {
   var p = pj.project, ops = [];
   var oldF = await dbByProject('fixtures', p.id), oldR = await dbByProject('records', p.id), oldP = await dbByProject('photos', p.id);
+  // クラウドには図面を送らないので、クラウドから戻すときは端末内の図面を残す
+  var keep = opts && opts.keepDrawings ? oldP.filter(isDrawing) : [];
+  oldP = oldP.filter(function (x) { return keep.indexOf(x) < 0; });
   oldF.forEach(function (x) { ops.push(['del', 'fixtures', x.id]); });
   oldR.forEach(function (x) { ops.push(['del', 'records', x.id]); });
   oldP.forEach(function (x) { ops.push(['del', 'photos', x.id]); ops.push(['del', 'photoData', x.id]); });
@@ -2554,7 +3729,7 @@ async function importProjectData(pj, getBytes) {
   if (missing) throw new Error('「' + p.name + '」の写真 ' + missing + ' 枚（全 ' + pj.photos.length + ' 枚中）を読み込めませんでした。この案件は戻していません（端末内のデータは変更していません）。クラウドからなら電波の良い所で、ZIPなら別の（新しい）ZIPでやり直してください');
   await dbWrite(ops);
   var chk = await Promise.all([dbByProject('records', p.id), dbByProject('photos', p.id), dbGet('projects', p.id)]);
-  if (!chk[2] || chk[0].length !== pj.records.length || chk[1].length !== nPh) throw new Error('書き込み後の件数が一致しません');
+  if (!chk[2] || chk[0].length !== pj.records.length || chk[1].length !== nPh + keep.length) throw new Error('書き込み後の件数が一致しません');
   return { records: chk[0].length, photos: nPh };
 }
 
@@ -2634,7 +3809,7 @@ async function pushProject(pid) {
   var col = cloudCol();
   var p = await dbGet('projects', pid);
   if (!p) return deleteCloudProject(pid, []);
-  var fx = await dbByProject('fixtures', pid), recs = await dbByProject('records', pid), phs = await dbByProject('photos', pid);
+  var fx = await dbByProject('fixtures', pid), recs = await dbByProject('records', pid), phs = (await dbByProject('photos', pid)).filter(function (x) { return !isDrawing(x); });
   for (var i = 0; i < phs.length; i++) {
     if (phs[i].assetId) continue;
     var d = await dbGet('photoData', phs[i].id);
@@ -2699,7 +3874,7 @@ async function cloudSync() {
     if (!local || (m.updatedAt || 0) > (local.updatedAt || 0)) {
       try {
         var pj = await fetchCloudProject(m);
-        await importProjectData(pj, cloudPhotoBytes);
+        await importProjectData(pj, cloudPhotoBytes, { keepDrawings: true });
         restored.push(m.name);
       } catch (e) { failed.push(errText(e)); }
     } else if ((local.updatedAt || 0) > (m.updatedAt || 0)) cloudDirty[m.pid] = 1;
@@ -2870,14 +4045,18 @@ function wire() {
   $('e-lamp').addEventListener('change', autoSource); fillSelect($('e-hm'), H_METHODS); fillSelect($('e-mount'), MOUNTS); fillSelect($('e-diff'), DIFFS);
   fillSelect($('e-plate'), YN3); fillSelect($('e-reuse'), REUSE); fillSelect($('e-repair'), YN3); fillSelect($('e-wet'), WET);
   fillSelect($('e-lit'), LIT); fillSelect($('e-det'), DET);
+  ['e-lit', 'e-det', 'e-hm', 'e-mount', 'e-diff', 'e-plate', 'e-reuse', 'e-repair', 'e-wet'].forEach(function (id) { chipSelect($(id)); });
+  heightChips($('e-ceil'), HEIGHTS); heightChips($('e-mh'), HEIGHTS);
   ACCESS.forEach(function (a) { $('e-access').append(h('label', {}, h('input', { type: 'checkbox', value: a }), a)); });
   CCT_LIST.forEach(function (c) { $('cctlist').append(h('option', { value: c })); });
   VOLT_LIST.forEach(function (c) { $('voltlist').append(h('option', { value: c })); });
 
   $('h-start').addEventListener('click', startProject);
+  $('h-start1').addEventListener('click', function () { startProject('single'); });
   $('h-name').addEventListener('keydown', function (e) { if (e.key === 'Enter') startProject(); });
   $('h-settings').addEventListener('click', function () { $('v-survey').dataset.from = ''; openSettings(); });
   $('h-restore-file').addEventListener('change', function (e) { var f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) restoreBackup(f); });
+  $('h-verify-file').addEventListener('change', function (e) { var f = e.target.files && e.target.files[0]; e.target.value = ''; if (f) verifyBackup(f); });
   $('h-cloud-restore').addEventListener('click', cloudRestore);
 
   $('s-home').addEventListener('click', async function () { await loadProjects(); renderHome(); show('home'); renderStoreStatus(); });
@@ -2899,6 +4078,18 @@ function wire() {
   $('s-place-clear').addEventListener('click', function () { $('s-place').value = ''; onPlaceInput(); $('s-place').focus(); });
   $('s-add').addEventListener('click', function () { openEditor({}); });
   $('s-photo').addEventListener('click', function () { $('s-photo-file').click(); });
+  $('s-dw').addEventListener('click', drawingSheet);
+  // いちばん上に戻るボタン：下にスクロールしたときだけ出す（記録画面では保存ボタンの上に出す）
+  var tt = $('totop');
+  tt.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  function ttShow() {   // 値が変わるときだけ書き換える（監視が自分の変更で回り続けないように）
+    var hide = window.scrollY < 400, up = !$('v-edit').hidden;
+    if (tt.hidden !== hide) tt.hidden = hide;
+    if (tt.classList.contains('above') !== up) tt.classList.toggle('above', up);
+  }
+  window.addEventListener('scroll', ttShow, { passive: true }); window.addEventListener('resize', ttShow);
+  new MutationObserver(ttShow).observe(document.body, { attributes: true, subtree: true, attributeFilter: ['hidden'] });
+  ['dw-pdf', 'dw-cam'].forEach(function (id) { $(id).addEventListener('change', function (e) { var f = Array.prototype.slice.call(e.target.files || []); e.target.value = ''; importDrawingFiles(f); }); });
   $('s-photo-file').addEventListener('change', function (e) { var f = Array.prototype.slice.call(e.target.files || []); e.target.value = ''; quickPhotos(f); });
   document.querySelectorAll('.tabs [data-tab]').forEach(function (b) { b.addEventListener('click', function () { S.tab = b.dataset.tab; renderSurvey(); }); });
   $('s-menu').addEventListener('click', projectMenu);
@@ -2918,8 +4109,9 @@ function wire() {
     if (k && k.mount && !$('e-mount').value) $('e-mount').value = k.mount;
     renderCands();
   });
+  useSymKeypad($('e-symbol'));
   $('e-symbol').addEventListener('input', function () {
-    var v = norm($('e-symbol').value);
+    var v = normSym($('e-symbol').value);
     if (!E.fixtureId) {
       var hit = S.fixtures.find(function (f) { return f.symbol === v; });
       if (hit && !$('e-model').value && !$('e-kind').value) { selectFixture(hit.id); toast('登録済みの器具 ' + v + ' を呼び出しました'); return; }
@@ -2928,6 +4120,8 @@ function wire() {
   });
   ['e-model', 'e-lamp', 'e-ballast', 'e-battery', 'e-cct', 'e-watt', 'e-volt'].forEach(function (id) { $(id).addEventListener('input', markUnc); });
   $('e-kind').addEventListener('change', updateBatVis);
+  ['e-model', 'e-dmodel'].forEach(function (id) { $(id).addEventListener('input', updateDiffVis); });
+  $('e-dsame').addEventListener('click', function () { $('e-model').value = norm($('e-dmodel').value); updateDiffVis(); markUnc(); renderLinks(); scheduleDraft(); });
   ['e-model', 'e-maker', 'e-lamp', 'e-eol'].forEach(function (id) { $(id).addEventListener('input', renderLinks); $(id).addEventListener('change', renderLinks); });
   ['e-amb', 'e-watt', 'e-cct', 'e-model'].forEach(function (id) { $(id).addEventListener('change', renderCands); });
   $('e-spec').addEventListener('input', updateSpecOpen);
