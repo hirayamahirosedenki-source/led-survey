@@ -576,7 +576,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
 <script>
 (function () {
 'use strict';
-var APP_VER = '1.1.43';
+var APP_VER = '1.1.44';
 
 /* ====================================================================
    定数
@@ -2305,9 +2305,9 @@ async function importPdf(file) {
   catch (e) { toast('PDFを読む部品（pdf.min.mjs）が見つかりません。GitHubに上げたか確かめてください。今は図面を写真で撮って入れてください', true); return []; }
   var made = [], blank = [], name = (file.name || '図面').replace(/\.pdf$/i, ''), batch = uid('dwb');
   var doc;
-  // スキャンした図面（JPEG2000・JBIG2）や日本語の文字を読むための部品は pdfjs フォルダに置く
-  var base = location.href.replace(/[?#].*$/, '').replace(/[^\/]*$/, '') + 'pdfjs/';
-  try { doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), wasmUrl: base + 'wasm/', cMapUrl: base + 'cmaps/', cMapPacked: true, iccUrl: base + 'iccs/', useSystemFonts: true }).promise; }
+  // スキャンした図面（JPEG2000・JBIG2）や日本語の文字を読むための部品（pdfjs フォルダ、またはアプリと同じ場所にばらばらに置いたもの）
+  var parts = await pdfParts();
+  try { doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), wasmUrl: parts.wasm, cMapUrl: parts.cmap, cMapPacked: true, iccUrl: parts.icc, useSystemFonts: true }).promise; }
   catch (e) { toast('PDFを開けませんでした：' + errText(e), true); return []; }
   for (var i = 1; i <= doc.numPages; i++) {
     toast('図面を取り込んでいます… ' + i + ' / ' + doc.numPages + 'ページ');
@@ -2326,14 +2326,24 @@ async function importPdf(file) {
   }
   try { doc.destroy(); } catch (e) {}
   if (blank.length) {
-    var hasParts = false;
-    try { hasParts = (await fetch(base + 'wasm/openjpeg.wasm', { method: 'HEAD', cache: 'no-cache' })).ok; } catch (e) {}
+    var hasParts = parts.found;
     await ask((blank.length === doc.numPages ? '図面' : blank.join('・') + 'ページ目') + 'が白紙で取り込まれました。' +
       (hasParts ? 'このPDFは読めない作り方の可能性があります。PDFを画面に開いてスクリーンショットを撮るか、図面を写真で撮って入れてください。'
         : 'スキャンした図面や日本語の文字を読む部品（pdfjs フォルダ）が見つかりません。GitHub に pdfjs フォルダを上げてから、もう一度入れてください。今すぐ必要なときは、図面を写真で撮って入れてください。'),
       [{ label: '閉じる', value: 'ok' }]);
   }
   return made;
+}
+// PDFの部品の置き場所を探す：pdfjs/wasm/… の形か、アプリと同じ場所にばらばらに置いた形か
+var pdfPartsCache = null;
+async function pdfParts() {
+  if (pdfPartsCache && pdfPartsCache.found) return pdfPartsCache;
+  var root = location.href.replace(/[?#].*$/, '').replace(/[^\/]*$/, '');
+  async function has(u) { try { var r = await fetch(u, { method: 'HEAD', cache: 'no-cache' }); return r.ok; } catch (e) { return false; } }
+  var res = { wasm: root + 'pdfjs/wasm/', cmap: root + 'pdfjs/cmaps/', icc: root + 'pdfjs/iccs/', found: false };
+  if (await has(root + 'pdfjs/wasm/openjpeg.wasm')) res.found = true;
+  else if (await has(root + 'openjpeg.wasm')) res = { wasm: root, cmap: (await has(root + 'pdfjs/cmaps/H.bcmap')) ? root + 'pdfjs/cmaps/' : root, icc: root, found: true };
+  pdfPartsCache = res; return res;
 }
 // 取り込んだページがほぼ真っ白か（間引いて調べる）
 function isBlankCanvas(c) {
