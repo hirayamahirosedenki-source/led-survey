@@ -65,7 +65,7 @@ input[type="text"], input[type="number"], input[type="url"], select, textarea {
 }
 textarea { min-height: 72px; resize: vertical; }
 input.mono { font-family: var(--font-mono); font-weight: 600; letter-spacing: .02em; }
-input.unc, textarea.unc { border: 2px solid var(--danger); background: var(--danger-bg); }
+input.unc, textarea.unc, select.unc { border: 2px solid var(--danger); background: var(--danger-bg); }
 label.f { display: flex; flex-direction: column; gap: 3px; font-size: .8rem; color: var(--muted); font-weight: 600; min-width: 0; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
@@ -163,6 +163,10 @@ details[open] > summary::before { content: "▾"; }
 .ov { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; }
 /* iPhoneで長い確認画面が下までスクロールできないことへの対策：中身を縮めずに、画面の中だけでスクロールさせる */
 .sheet > * { flex-shrink: 0; }
+.ctile.hi { box-shadow: 0 0 0 4px var(--accent); border-color: var(--accent); }
+.matchcard { border: 2px solid var(--accent); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.matchrow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 4px 0; border-top: 1px solid var(--line); }
+.matchrow .mtx { flex: 1 1 12rem; min-width: 0; }
 /* 器具記号をまとめて登録：図面を見ながら入れる */
 .bulkform { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 .dwpanel { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: var(--surface); }
@@ -406,6 +410,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
     <p class="note">写真は追加した時点で端末内に保存されます。写真をタップすると種類の変更、型番の読み取り、削除ができます。</p>
     <div class="status" id="e-ai" hidden role="status"></div>
     <div id="e-aires"></div>
+    <div id="e-match"></div>
   </div>
 
   <div class="card" id="e-speccard">
@@ -593,7 +598,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
 <script>
 (function () {
 'use strict';
-var APP_VER = '1.1.46';
+var APP_VER = '1.1.47';
 
 /* ====================================================================
    定数
@@ -1432,6 +1437,7 @@ function renderCountTab() {
   var total = here.reduce(function (s, r) { return s + (Number(r.qty) || 0); }, 0);
   wrap.append(h('div', { class: 'group-h' }, h('h3', { text: lvLabel(lv) + '　' + place }),
     h('span', { class: 'note', text: total + '台' + (planned.length ? '・確認 ' + done.length + '/' + planned.length + '記号' : '') })));
+  wrap.append(h('button', { type: 'button', text: '📷 銘板で照会（どの記号か分からないとき）', onclick: plateLookup }));
   if (planned.length && done.length < planned.length) {
     wrap.append(h('button', { type: 'button', text: 'この場所は予定どおり（全部 ✓ にする）', onclick: once(async function () {
       var n = await confirmPlanned(planned); if (n > 0) { renderSurvey(); toast(place + 'の ' + n + ' 記号を予定どおりで確認済みにしました'); }
@@ -1443,6 +1449,7 @@ function renderCountTab() {
     if (r && isPlanned(r)) { cntTxt = (r.cnt == null ? 0 : r.cnt) + ' / ' + r.plan; cls += r.cnt === r.plan ? ' done' : (r.cnt == null ? ' todo' : (r.cnt > r.plan ? ' over' : ' todo')); }
     else if (r) { cntTxt = String(r.qty || 0); cls += ' done'; }
     else cntTxt = '0';
+    if (S.hiFx && S.hiFx.indexOf(f.id) >= 0) cls += ' hi';
     var tap = h('button', { type: 'button', class: 'ctap', 'aria-label': f.symbol + ' を1台数える（今 ' + cntTxt + '）', onclick: function () { tap.classList.add('hit'); setTimeout(function () { tap.classList.remove('hit'); }, 150); countChange(f.id, 1); } },
       h('span', { class: 'csym' + xc(f), text: f.symbol }),
       h('span', { class: 'ccnt', text: cntTxt + (r && recDone(r) && isPlanned(r) ? ' ✓' : '') }));
@@ -1826,6 +1833,138 @@ function fxMatches(f) {
   return !q || (f.symbol || '').indexOf(q) === 0;
 }
 // 型番で探して見つからないとき：その型番を入れた状態で新しい器具の記録画面を開く
+/* 型番の照会：読んだ型番（? は読めない文字）と、登録済みの器具の型番（図面・現地・公共）を照らし合わせる */
+function matchKey(a, b) {
+  if (!a || !b) return '';
+  if (a === b) return 'exact';
+  var i;
+  if (a.indexOf('?') >= 0 && a.length === b.length) { for (i = 0; i < a.length; i++) if (a.charAt(i) !== '?' && a.charAt(i) !== b.charAt(i)) return ''; return 'exact'; }
+  var n = Math.min(a.length, b.length); if (n < 5) return '';
+  if (a.indexOf(b) === 0 || b.indexOf(a) === 0) return 'near';
+  var q = 0; while (q < n && (a.charAt(q) === b.charAt(q) || a.charAt(q) === '?')) q++;
+  return q >= Math.max(5, n - 2) ? 'near' : '';
+}
+// part=true：手で打った型番の一部（どこか一部が合えば候補）
+function matchFixtures(models, part) {
+  var keys = (models || []).map(modelKeyLoose).filter(function (k) { return k.replace(/\?/g, '').length >= 3; });
+  var res = [];
+  if (!keys.length) return res;
+  S.fixtures.forEach(function (f) {
+    var best = '';
+    [f.model, f.drawingModel, f.publicModel].forEach(function (v) {
+      var k = modelKeyLoose(v); if (!k) return;
+      keys.forEach(function (q) {
+        var m = matchKey(q, k);
+        if (!m && part && q.indexOf('?') < 0 && k.indexOf(q) >= 0) m = 'near';
+        if (m === 'exact') best = 'exact'; else if (m && !best) best = m;
+      });
+    });
+    if (best) res.push({ f: f, how: best });
+  });
+  return res.sort(function (a, b) { return (a.how === 'exact' ? 0 : 1) - (b.how === 'exact' ? 0 : 1) || symCompare(a.f.symbol, b.f.symbol); });
+}
+function fxLine(f) { return [kindName(f.kind) || '種類未入力', f.model ? '現地 ' + f.model : '', f.drawingModel ? '図面 ' + f.drawingModel : '', lampLabel(f)].filter(Boolean).join('　'); }
+// 器具の画面：銘板を読んだ／型番を入れたら、登録済みの器具に合うものを出す
+function editorModels() { return [norm($('e-model').value), norm($('e-pmodel').value)].filter(Boolean); }
+function renderMatch() {
+  var box = $('e-match'); if (!box) return; box.replaceChildren();
+  if (!E || E.mode === 'fixture' || !S.fixtures.length) return;
+  var ms = editorModels(); if (!ms.length) return;
+  var hits = matchFixtures(ms, false);
+  if (E.fixtureId && hits.some(function (x) { return x.f.id === E.fixtureId; })) return;   // もうその器具を選んでいる
+  if (!hits.length) {
+    if (!E.fixtureId) box.append(h('p', { class: 'note', text: '登録済みの器具に同じ型番はありません。新しい器具記号として登録します。' }));
+    return;
+  }
+  var exact = hits.some(function (x) { return x.how === 'exact'; });
+  var card = h('div', { class: 'matchcard', role: 'status' },
+    h('strong', { text: exact ? '登録済みの器具に同じ型番があります' : '近い型番の登録があります（末尾などが違います）' }));
+  hits.slice(0, 6).forEach(function (x) {
+    card.append(h('div', { class: 'matchrow' },
+      h('span', { class: 'sym' + xc(x.f), text: x.f.symbol }),
+      h('div', { class: 'mtx' }, h('div', { text: fxLine(x.f) }), x.how === 'near' ? h('div', { class: 'note', text: '近い型番' }) : null),
+      h('button', { type: 'button', class: 'small primary', text: 'この器具（' + x.f.symbol + '）として記録', onclick: function () { useMatched(x.f.id); } })));
+  });
+  if (hits.length > 6) card.append(h('p', { class: 'note', text: 'ほかに ' + (hits.length - 6) + ' 件あります。型番を詳しく入れると絞れます。' }));
+  box.append(card);
+}
+function useMatched(fid) {
+  var keep = {};
+  PICK_KEYS.concat(['year']).forEach(function (k) { var id = k === 'year' ? 'e-year' : FIELD_INPUT[k]; keep[id] = $(id).value; });
+  selectFixture(fid);
+  // 登録情報が空の欄は、読んだ値で埋める（現地の型番など）
+  Object.keys(keep).forEach(function (id) { if (keep[id] && !$(id).value) $(id).value = keep[id]; });
+  updateDiffVis(); markUnc(); renderLinks(); updateBatVis(); scheduleDraft(); renderMatch();
+  var f = fxById(fid); toast('登録済みの ' + f.symbol + ' として記録します。数量を入れて保存してください');
+  var q = $('e-qty'); if (q) q.scrollIntoView({ block: 'center', behavior: 'smooth' });
+}
+var matchTimer = null;
+function scheduleMatch() { clearTimeout(matchTimer); matchTimer = setTimeout(renderMatch, 400); }
+
+// 数える画面：どの記号か分からない器具を、銘板（写真か型番）から照会する
+function highlightFx(ids) {
+  S.hiFx = ids; S.restOpen = true; S.symQ = ''; S.symHead = ''; S.modelQ = '';
+  renderSurvey();
+  setTimeout(function () { var t = document.querySelector('#s-body .ctile.hi'); if (t) t.scrollIntoView({ block: 'center', behavior: 'smooth' }); }, 80);
+  clearTimeout(highlightFx.t); highlightFx.t = setTimeout(function () { S.hiFx = null; if (S.p && S.p.current) renderSurvey(); }, 20000);
+}
+function plateLookup() {
+  var place = currentPlace();
+  var inp = h('input', { type: 'text', class: 'mono', placeholder: '型番の一部（例：NNN615）', 'aria-label': '照会する型番', autocomplete: 'off', autocapitalize: 'characters', spellcheck: 'false' });
+  var res = h('div', { style: 'display:flex;flex-direction:column;gap:6px' });
+  var st = h('div', { class: 'status', role: 'status', hidden: true });
+  function show(models, part) {
+    res.replaceChildren();
+    models = models.filter(Boolean);
+    if (!models.length) return;
+    var hits = matchFixtures(models, part);
+    if (!hits.length) {
+      res.append(h('div', { class: 'status err', text: '登録にない型番です：' + models.join('、') }),
+        h('button', { type: 'button', class: 'primary', text: 'この型番で新しい器具を記録する', onclick: function () { closeOverlay(); newFxWithModel(models[0]); } }));
+      return;
+    }
+    res.append(h('strong', { text: hits.some(function (x) { return x.how === 'exact'; }) ? '登録済みの器具に合いました' : '近い型番の器具があります' }));
+    hits.slice(0, 8).forEach(function (x) {
+      res.append(h('div', { class: 'matchrow' },
+        h('span', { class: 'sym' + xc(x.f), text: x.f.symbol }),
+        h('div', { class: 'mtx' }, h('div', { text: fxLine(x.f) }), x.how === 'near' ? h('div', { class: 'note', text: '近い型番' }) : null),
+        h('button', { type: 'button', class: 'small primary', text: 'ここで1台数える', onclick: function () { closeOverlay(); highlightFx([x.f.id]); countChange(x.f.id, 1); toast(place + ' に ' + x.f.symbol + ' を1台数えました'); } })));
+    });
+    res.append(h('button', { type: 'button', text: '数える画面で光らせる（自分で押して数える）', onclick: function () { closeOverlay(); highlightFx(hits.map(function (x) { return x.f.id; })); } }));
+  }
+  inp.addEventListener('input', function () { var v = norm(inp.value); if (modelKeyLoose(v).length >= 3) show([v], true); else res.replaceChildren(); });
+  var file = h('input', { type: 'file', accept: 'image/*', capture: 'environment', class: 'visually-hidden', 'aria-label': '銘板を撮る' });
+  file.addEventListener('change', function () {
+    var fl = file.files && file.files[0]; file.value = ''; if (!fl) return;
+    cropUI(fl, async function (crop) {
+      plateLookup.again = true;
+      reopen();
+      st.hidden = false; st.className = 'status'; st.textContent = '読み取り中です。数十秒かかることがあります。';
+      try {
+        var d = normalizeReading(await aiRead(crop));
+        var ms = [d.fields.model, d.fields.pmodel].concat(d.items.filter(function (i) { return /fixture|unknown|public/.test(i.kind || ''); }).map(function (i) { return norm(i.value); }));
+        ms = ms.filter(function (v, i) { return v && ms.indexOf(v) === i; });
+        st.hidden = true; inp.value = ms[0] || '';
+        if (!ms.length) { st.hidden = false; st.className = 'status err'; st.textContent = '型番を読み取れませんでした。型番を手で入れてください。'; return; }
+        show(ms, false);
+      } catch (e) { st.hidden = false; st.className = 'status err'; st.textContent = '読み取りに失敗しました（' + errText(e) + '）。型番を手で入れてください。'; }
+    }, '照会のための読み取り（写真は保存しません）');
+  });
+  var sh;
+  function reopen() {
+    sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '銘板で照会' },
+      h('h2', { text: '銘板で照会（どの記号か調べる）' }),
+      h('p', { class: 'note', text: lvLabel(S.p.current.level) + '　' + (place || '場所未選択') + '。登録済みの器具の「図面の型番・現地の型番・公共型番」と照らし合わせます。' }),
+      aiAvailable() ? h('button', { type: 'button', class: 'primary big', text: '📷 銘板を撮って読み取る', onclick: function () { file.click(); } })
+        : h('p', { class: 'note', text: 'AIの読み取りは準備中です（会社の承認・サーバーの設定後に使えます）。型番を数文字入れて照会してください。' }),
+      file, h('label', { class: 'f' }, '型番を入れて照会', inp), st, res,
+      h('button', { type: 'button', text: '閉じる', onclick: closeOverlay }));
+    overlay(sh);
+    if (inp.value) show([norm(inp.value)], true);
+    if (!aiAvailable()) setTimeout(function () { inp.focus(); }, 50);
+  }
+  reopen();
+}
 function newFxWithModel(model) {
   S.modelQ = '';
   openEditor({});
@@ -1940,7 +2079,7 @@ function lastRecordOf(fid) {
 // 調査前に、Goodnotesの器具記号と種類だけを先に登録する（型番などは現場で追記）
 var dwLast = null;   // 登録画面で最後に見ていた図面
 // 図面を見る小さな画面（姿図・器具表を先に並べる）。入力の途中で閉じずに見られる
-function drawingPanel() {
+function drawingPanel(onAi, reopen) {
   var list = drawings().slice().sort(function (a, b) {
     var r = function (d) { return d.dwType === 'elev' ? 0 : d.dwType === 'other' || !d.dwType ? 1 : 2; };
     return r(a) - r(b) || (a.createdAt || 0) - (b.createdAt || 0) || (a.dwPage || 1) - (b.dwPage || 1);
@@ -1968,9 +2107,35 @@ function drawingPanel() {
       h('button', { type: 'button', class: 'small', 'aria-label': '縮小', text: '−', onclick: function () { zoom(z - 1); } }), zl,
       h('button', { type: 'button', class: 'small', 'aria-label': '拡大', text: '＋', onclick: function () { zoom(z + 1); } }),
       h('span', { style: 'flex:1' }),
-      h('button', { type: 'button', class: 'small', text: '大きく見る', onclick: function () { openFull(list[idx].id); } })));
+      h('button', { type: 'button', class: 'small', text: '大きく見る', onclick: function () { openFull(list[idx].id); } })),
+    onAi ? h('button', { type: 'button', class: 'dwai', text: '🤖 このページをAIで読み取る（記号・種類・型番）', onclick: function () { readPageAi(list[idx], onAi, reopen); } }) : null);
   show();
   return panel;
+}
+// 確認の画面は登録の画面と入れ替わるので、閉じたら入力の途中の画面（reopen）に戻す
+async function readPageAi(d, onAi, reopen) {
+  if (!aiAvailable()) {
+    await ask('AIで図面を読み取る準備ができていません。会社の承認と、読み取りサーバーの設定が必要です。図面は送っていません。今は図面を見ながら手で入れてください。', [{ label: '閉じる', value: 'ok' }]);
+    if (reopen) reopen();
+    return;
+  }
+  var dest = caps.sample ? 'Claude（Anthropic）の読み取り機能' : '会社サーバー（' + S.settings.endpoint + '）';
+  var c = await ask('このページ（' + (d.dwName || '図面') + '）の画像をAIに送って、器具記号・種類・型番を読み取ります。送信先：' + dest + '。図面のページを社外に送るので、会社の承認を得てから使ってください。物件名・階・写真は送りません。',
+    [{ label: '送って読み取る', value: 'y', cls: 'primary' }, { label: 'やめる', value: null }]);
+  if (reopen) reopen();
+  if (c !== 'y') return;
+  var ov = $('overlay'), busy = h('div', { class: 'status', role: 'status', text: 'AIで読み取り中です。1分ほどかかることがあります。' });
+  var bar = document.querySelector('#overlay .dwpanel'); if (bar) bar.append(busy);
+  try {
+    var li = await loadImage(await photoBlob(d.id));
+    var jb = await drawJpeg(li.img, 2400, 0.85); URL.revokeObjectURL(li.url);
+    var r = normalizeDrawingItems(await aiReadDrawing(jb.blob));
+    busy.remove();
+    if (!r.items.length) { toast('このページから器具記号を読み取れませんでした', true); return; }
+    onAi(r.items, r.note);
+  } catch (e) {
+    busy.className = 'status err'; busy.textContent = '読み取りに失敗しました（' + errText(e) + '）。手で入れてください。';
+  }
 }
 function bulkFixtureSheet() {
   var hasDw = drawings().length > 0;
@@ -2032,13 +2197,14 @@ function bulkFixtureSheet() {
       if (!sym) { problem = '種類を選んだ行に記号がありません。Goodnotesの記号を入れてください。'; return; }
       if (used[sym]) { problem = '記号 ' + sym + ' はこの案件に登録済みです。別の記号にしてください。'; return; }
       if (seen[sym]) { problem = '記号 ' + sym + ' が2回入っています。'; return; }
-      seen[sym] = 1; list.push({ symbol: sym, kind: kind, drawingModel: dmv });
+      if (hasQ(sym) || hasQ(dmv)) { problem = '記号 ' + sym + ' に読めない文字（?）が残っています。図面を見て直してください。'; return; }
+      seen[sym] = 1; list.push({ symbol: sym, kind: kind, drawingModel: dmv, maker: r.dataset.maker || '', lamp: r.dataset.lamp || '' });
     });
     if (!problem && !list.length) problem = '登録する行がありません。種類を選んでください。';
     if (problem) { err.textContent = problem; err.hidden = false; return; }
     var now = Date.now();
     var fxs = list.map(function (x) {
-      return { id: uid('fx'), projectId: S.p.id, symbol: x.symbol, kind: x.kind, maker: '', model: '', drawingModel: x.drawingModel || '', lamp: '', ballast: '', cct: '', cctMethod: '', watt: '', volt: '',
+      return { id: uid('fx'), projectId: S.p.id, symbol: x.symbol, kind: x.kind, maker: x.maker || '', model: '', drawingModel: x.drawingModel || '', lamp: x.lamp || '', lampW: guessLampW(x.lamp || '') || '', ballast: '', cct: '', cctMethod: '', watt: '', volt: '',
         dims: {}, ambience: false, needLookup: false, memo: '', spec: '', cands: [], createdAt: now, updatedAt: now };
     });
     var ops = fxs.map(function (f) { return ['put', 'fixtures', f]; });
@@ -2054,7 +2220,29 @@ function bulkFixtureSheet() {
   form.append(rows, h('button', { type: 'button', text: '＋ 行を追加', onclick: addRow }), err,
     h('button', { type: 'button', class: 'primary big', text: '登録する', onclick: once(saveAll) }));
   // 図面があれば、上（PCの広い画面では左）に図面を出して、見ながら入れる
-  sh.append(hasDw ? h('div', { class: 'bulkgrid' }, drawingPanel(), form) : form);
+  // AIで読んだ姿図の行を、入力欄に並べる（登録済みの記号は飛ばす。? のある欄は赤い枠）
+  function fillFromAi(items, note) {
+    var made = 0, skip = [], upd = 0;
+    items.forEach(function (it) {
+      if (used[it.symbol]) { skip.push(it.symbol); return; }
+      var row = Array.prototype.find.call(rows.querySelectorAll('.brow'), function (r) { return normSym(r.querySelector('input').value) === it.symbol; });
+      if (row) upd++;
+      else {
+        row = Array.prototype.find.call(rows.querySelectorAll('.brow'), function (r) { return !r.querySelector('input').value && !r.querySelector('select').value; });
+        if (!row) { addRow(); row = rows.lastElementChild; }
+        made++;
+      }
+      var si = row.querySelector('input'), ks = row.querySelector('select'), dm = row.querySelector('input[aria-label="図面の型番"]');
+      si.value = it.symbol;
+      if (it.kind && !ks.value) ks.value = it.kind;
+      if (it.model && !dm.value) dm.value = it.model;
+      if (it.maker) row.dataset.maker = it.maker;
+      if (it.lamp) row.dataset.lamp = it.lamp;
+      si.classList.toggle('unc', hasQ(si.value)); dm.classList.toggle('unc', hasQ(dm.value)); ks.classList.toggle('unc', !ks.value);
+    });
+    toast('AIで ' + (made + upd) + ' 件読み取りました' + (skip.length ? '（登録済みのため飛ばした記号：' + skip.join('、') + '）' : '') + '。図面と見比べて、赤い枠の欄を直してから「登録する」を押してください' + (note ? '。AIからの注意：' + note : ''));
+  }
+  sh.append(hasDw ? h('div', { class: 'bulkgrid' }, drawingPanel(fillFromAi, function () { overlay(sh, null, { noBackdrop: true }); }), form) : form);
   overlay(sh, null, { noBackdrop: true });   // 入力の途中で外側を押しても消えない
 }
 function renderFixturesTab() {
@@ -2178,7 +2366,7 @@ function renderSumTab() {
 // 開いた画面の上部に、スクロールしても残る「閉じる」を付ける（下までスクロールしなくて済むように）
 function overlay(content, onClose, opts) {
   var ov = $('overlay');
-  if (!(opts && opts.noTop) && content.classList && content.classList.contains('sheet')) {
+  if (!(opts && opts.noTop) && content.classList && content.classList.contains('sheet') && !(content.firstElementChild && content.firstElementChild.classList.contains('sheettop'))) {
     content.prepend(h('div', { class: 'sheettop' }, h('button', { type: 'button', text: '閉じる ✕', 'aria-label': '閉じる', onclick: function () { closeOverlay(); if (onClose) onClose(); } })));
   }
   ov.replaceChildren(content); ov.hidden = false; document.documentElement.classList.add('ovopen');
@@ -2597,7 +2785,7 @@ function openEditor(o) {
   $('e-del').hidden = !(mode === 'record' && persisted);
   $('e-err').hidden = true; $('e-ai').hidden = true; $('e-aires').replaceChildren();
   $('e-cform').hidden = true;
-  renderChips(); renderPkind(); renderEditorPhotos(); renderLinks(); renderCands();
+  renderChips(); renderPkind(); renderEditorPhotos(); renderLinks(); renderCands(); renderMatch();
   // 登録済みの器具を記録するときは仕様を折りたたみ、施工条件と写真を近くに出す
   setSpecFold(mode !== 'fixture' && specSettled(fx));
   loadSingle(rec && rec.single, o.single); renderSingleEditor();
@@ -2713,7 +2901,7 @@ function selectFixture(fid) {
   if (fx && !$('e-mount').value) { var k = kindOf(fx.kind); if (k && k.mount) $('e-mount').value = k.mount; }
   E.dirty = true;
   setSpecFold(specSettled(fx));
-  renderChips(); renderLinks(); renderCands(); renderOtherPhotos(editorPhotos()); scheduleDraft();
+  renderChips(); renderLinks(); renderCands(); renderOtherPhotos(editorPhotos()); scheduleDraft(); renderMatch();
 }
 function renderDims(vals) {
   var box = $('e-dims'); box.replaceChildren();
@@ -2822,7 +3010,7 @@ async function addEditorPhotos(files) {
 async function saveEditor() {
   editorErr('');
   var f = readFixtureForm();
-  var now = Date.now(), ops = [], fx = null;
+  var now = Date.now(), ops = [], fx = null, mergedAdd = 0;
   var existing = E.fixtureId ? fxById(E.fixtureId) : null;
   var useFx = E.mode === 'fixture' || existing || !fixtureFormEmpty(f) || (!!f.symbol && !editorPhotos().length);
   if (useFx) {
@@ -2840,10 +3028,23 @@ async function saveEditor() {
     rec = Object.assign({}, E.rec, rf, { fixtureId: fx ? fx.id : null, status: fx ? 'ok' : 'photo', updatedAt: now });
     if (!fx) rec.qty = null;
     else if (rec.plan == null || rec.qty !== E.rec.qty) { rec.cnt = rec.qty; if (rec.plan != null) rec.plan = rec.qty; }
+    // 同じ器具が同じ階・場所にもう記録されているときは、新しい記録を作らず、その記録に台数を足す（写真も移す）
+    var mergeInto = null; mergedAdd = 0;
+    if (fx && E.openedNew !== false) {
+      mergeInto = S.records.find(function (x) { return x.id !== rec.id && x.fixtureId === fx.id && x.level === rec.level && (x.place || '') === (rec.place || ''); }) || null;
+    }
+    if (mergeInto) {
+      var c0 = isPlanned(mergeInto) ? (mergeInto.cnt == null ? 0 : mergeInto.cnt) : (Number(mergeInto.qty) || 0);
+      var add = rec.qty;
+      var keepRec = Object.assign({}, mergeInto, { cnt: c0 + add, qty: c0 + add, updatedAt: now });
+      Object.keys(rf).forEach(function (k) { if (k !== 'qty' && k !== 'level' && k !== 'place' && (keepRec[k] == null || keepRec[k] === '') && rf[k] != null && rf[k] !== '') keepRec[k] = rf[k]; });
+      if (E.persisted) ops.push(['del', 'records', E.rec.id]);
+      rec = keepRec; mergedAdd = add;
+    }
     ops.push(['put', 'records', rec]);
     editorPhotos().forEach(function (p) {
-      var np = Object.assign({}, p, { fixtureId: fx ? fx.id : null, level: rec.level, place: rec.place });
-      if (np.fixtureId !== p.fixtureId || np.level !== p.level || np.place !== p.place) ops.push(['put', 'photos', np]);
+      var np = Object.assign({}, p, { recordId: mergeInto ? rec.id : p.recordId, fixtureId: fx ? fx.id : null, level: rec.level, place: rec.place });
+      if (np.recordId !== p.recordId || np.fixtureId !== p.fixtureId || np.level !== p.level || np.place !== p.place) ops.push(['put', 'photos', np]);
     });
     // 新しい記録のときだけ、今いる階・場所をその記録に合わせる。
     // ほかの階の記録を開いて直しただけなら、今いる階・場所は変えない（次の記録が別の階に入るのを防ぐ）。
@@ -2864,14 +3065,16 @@ async function saveEditor() {
   ops.forEach(function (o) {
     var obj = o[2];
     if (o[1] === 'fixtures') replaceIn(S.fixtures, obj);
-    if (o[1] === 'records') replaceIn(S.records, obj);
+    if (o[1] === 'records' && o[0] === 'del') S.records = S.records.filter(function (x) { return x.id !== obj; });
+    else if (o[1] === 'records') replaceIn(S.records, obj);
     if (o[1] === 'photos') replaceIn(S.photos, obj);
     if (o[1] === 'projects') S.p = obj;
   });
   clearDraft();
   E = null;
   renderSurvey(); show('survey');
-  if (rec && fx) toast('保存しました：' + fx.symbol + ' ×' + rec.qty + '（' + lvLabel(rec.level) + (rec.place ? ' ' + rec.place : '') + '）');
+  if (rec && fx && mergedAdd) toast('保存しました：' + fx.symbol + ' に ' + mergedAdd + '台を足して計 ' + rec.qty + '台（' + lvLabel(rec.level) + (rec.place ? ' ' + rec.place : '') + '）');
+  else if (rec && fx) toast('保存しました：' + fx.symbol + ' ×' + rec.qty + '（' + lvLabel(rec.level) + (rec.place ? ' ' + rec.place : '') + '）');
   else if (rec) toast('写真のみの記録として保存しました（未整理）');
   else toast('器具 ' + fx.symbol + ' の情報を保存しました');
   scheduleCloud();
@@ -3043,6 +3246,10 @@ function aiStatusText() {
 async function cropAndRead(pid) {
   var blob;
   try { blob = await photoBlob(pid); } catch (e) { toast(errText(e), true); return; }
+  cropUI(blob, function (b) { runReading(b); });
+}
+// 写真から銘板の部分だけを囲んで切り取る（送るのは囲んだ範囲だけ）
+async function cropUI(blob, onDone, purpose) {
   var li;
   try { li = await loadImage(blob); } catch (e) { toast(errText(e), true); return; }
   var rect = { x: 0, y: 0, w: 1, h: 1 };
@@ -3072,7 +3279,7 @@ async function cropAndRead(pid) {
         try {
           var c = await drawJpeg(li.img, 1600, 0.9, r);
           URL.revokeObjectURL(li.url);
-          runReading(c.blob);
+          onDone(c.blob);
         } catch (e) { URL.revokeObjectURL(li.url); toast('切り取りに失敗しました：' + errText(e), true); }
       } })
     ),
@@ -3110,6 +3317,49 @@ async function aiRead(blob, signal) {
   var res = await fetch(ep, { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob, signal: signal, credentials: 'include' });
   if (!res.ok) { var e2 = new Error('サーバーの応答 ' + res.status); e2.code = 'http'; throw e2; }
   return await res.json();
+}
+/* 姿図・器具表のページをAIで読む（会社の承認後に使う。送るのはそのページの画像だけ） */
+function drawingPrompt() {
+  return [
+    '添付は日本の照明器具の「器具姿図」または「器具表」の1ページ（スキャン画像のことがあります）です。載っている器具を1つずつ読み取り、JSONだけを返してください。',
+    'ルール：',
+    '- symbol は図面に書かれた器具記号をそのまま写す（例：A、a、(A)、(a)、A321、a601W、A-1）。大文字と小文字、かっこ、ハイフンも図面どおりにする。',
+    '- 1つの記号に1行。同じ記号が何度出ても1行にまとめる。',
+    '- kind は器具の種類の言葉（ダウンライト、ベースライト、シーリング、ブラケット、足元灯、スポットライト、投光器、ポール灯、ペンダント、誘導灯、非常用照明 など）。分からなければ空文字。',
+    '- model は器具の型番（品番・形名）。lamp はランプの型番。maker はメーカー名が書かれているときだけ選ぶ。',
+    '- 読めない文字は1文字ごとに ? にする。推測で補わない。書かれていない項目は空文字。',
+    '- 0とO、1とI、5とS、8とB、2とZ は特に注意する。',
+    '形式：',
+    '{"items":[{"symbol":"","kind":"","maker":"' + MAKERS.map(function (m) { return m.id; }).join('|') + '|unknown","model":"","lamp":"","note":""}],"note":"読み取りの注意があれば"}'
+  ].join('\n');
+}
+async function aiReadDrawing(blob, signal) {
+  if (caps.sample) return await caps.sample.json(drawingPrompt(), { images: [blob], signal: signal });
+  var ep = safeUrl(S.settings.endpoint);
+  if (!ep || ENV.claude) { var er = new Error('unavailable'); er.code = 'unavailable'; throw er; }
+  // 会社サーバーには「姿図の読み取り」だと分かるように kind=drawing を付ける（サーバー側の対応が必要）
+  var res = await fetch(ep + (ep.indexOf('?') >= 0 ? '&' : '?') + 'kind=drawing', { method: 'POST', headers: { 'Content-Type': 'image/jpeg' }, body: blob, signal: signal, credentials: 'include' });
+  if (!res.ok) { var e2 = new Error('サーバーの応答 ' + res.status); e2.code = 'http'; throw e2; }
+  return await res.json();
+}
+// 種類の言葉 → アプリの器具種類
+function kindFromWord(w) {
+  w = String(w || '').normalize('NFKC'); if (!w) return '';
+  var rules = [[/誘導/, 'exit'], [/非常/, 'emergency'], [/ダウン/, 'downlight'], [/逆富士|トラフ|直付.*ベース|ベース.*直付/, 'base-surf'], [/埋込.*ベース|ベース.*埋込|スクエア/, 'base-rec'], [/ベース/, 'base-surf'],
+    [/シーリング|天井直付/, 'ceiling'], [/ブラケット|壁付/, 'bracket'], [/足元|フット/, 'foot'], [/スポット/, 'spot'], [/投光/, 'flood'], [/ポール|庭園|門柱/, 'pole'], [/ペンダント|吊/, 'pendant']];
+  for (var i = 0; i < rules.length; i++) if (rules[i][0].test(w)) return rules[i][1];
+  var k = KINDS.find(function (x) { return w.indexOf(x.name) >= 0; });
+  return k ? k.id : '';
+}
+function normalizeDrawingItems(d) {
+  var list = d && Array.isArray(d.items) ? d.items : [], seen = {}, out = [];
+  list.forEach(function (it) {
+    if (!it || typeof it !== 'object') return;
+    var sym = normSym(String(it.symbol || '')); if (!sym || seen[sym]) return; seen[sym] = 1;
+    out.push({ symbol: sym, kind: kindFromWord(it.kind), kindWord: String(it.kind || ''), maker: MAKERS.some(function (m) { return m.id === it.maker; }) ? it.maker : '',
+      model: norm(String(it.model || '')), lamp: norm(String(it.lamp || '')) });
+  });
+  return { items: out, note: d && typeof d.note === 'string' ? d.note : '' };
 }
 function normalizeReading(d) {
   var out = { maker: '', fields: {}, items: [], note: '' };
@@ -3223,6 +3473,7 @@ async function runReading(blob) {
   } finally { if (aiCtl === ctl) aiCtl = null; }
 }
 function applyReading(d, method) {
+  setTimeout(renderMatch, 0);
   setSpecFold(false);
   var box = $('e-aires'); box.replaceChildren();
   var filled = [], conflicts = [], unc = [], bodyColor = '';
@@ -4496,6 +4747,7 @@ function wire() {
   ['e-model', 'e-dmodel'].forEach(function (id) { $(id).addEventListener('input', updateDiffVis); });
   $('e-dsame').addEventListener('click', function () { $('e-model').value = norm($('e-dmodel').value); updateDiffVis(); markUnc(); renderLinks(); scheduleDraft(); });
   ['e-model', 'e-pmodel', 'e-maker', 'e-lamp', 'e-eol'].forEach(function (id) { $(id).addEventListener('input', renderLinks); $(id).addEventListener('change', renderLinks); });
+  ['e-model', 'e-pmodel'].forEach(function (id) { $(id).addEventListener('input', scheduleMatch); $(id).addEventListener('change', scheduleMatch); });
   ['e-amb', 'e-watt', 'e-cct', 'e-model'].forEach(function (id) { $(id).addEventListener('change', renderCands); });
   $('e-spec').addEventListener('input', updateSpecOpen);
   $('e-past').addEventListener('click', pastSearch);
