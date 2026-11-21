@@ -14,7 +14,7 @@
 /* LED更新調査：1列のスマートフォン向け業務画面。案件一覧 → 調査（階・場所を保持）→ 器具記録。 */
 :root {
   --bg: #eceff1; --surface: #ffffff; --ink: #1b2630; --muted: #5b6b78; --line: #d3dae0;
-  --accent: #0b5c8a; --accent-ink: #ffffff; --accent-soft: #e1eef6;
+  --accent: #0b5c8a; --exit: #0a7a3d; --exit-ink: #ffffff; --accent-ink: #ffffff; --accent-soft: #e1eef6;
   --warn-bg: #fff1d6; --warn-ink: #7a4a00; --ok-bg: #dff1e5; --ok-ink: #1d6b3a;
   --danger: #a3261f; --danger-bg: #fde4e1;
   --font-body: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
@@ -25,7 +25,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #12181d; --surface: #1a2229; --ink: #e6ecf0; --muted: #9aa9b5; --line: #2c3943;
-    --accent: #5ab4e8; --accent-ink: #06202f; --accent-soft: #17303f;
+    --accent: #5ab4e8; --exit: #3fbf6f; --exit-ink: #06202f; --accent-ink: #06202f; --accent-soft: #17303f;
     --warn-bg: #3a2c0e; --warn-ink: #f2c46d; --ok-bg: #173325; --ok-ink: #7fd69c;
     --danger: #ff8a80; --danger-bg: #3d1a17; color-scheme: dark;
   }
@@ -121,6 +121,13 @@ label.f { display: flex; flex-direction: column; gap: 3px; font-size: .8rem; col
 .findmode button { flex: 1 1 0; }
 .chip { flex: none; min-height: 48px; padding: 4px 10px; border-radius: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 0; font-weight: 600; }
 .chip small { font-weight: 400; color: var(--muted); font-size: .72rem; max-width: 9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sym.exit { background: var(--exit); color: var(--exit-ink); }
+.csym.exit { color: var(--exit) !important; }
+.xbadge { display: inline-block; font-size: .7rem; font-weight: 700; color: var(--exit-ink); background: var(--exit); border-radius: 6px; padding: 1px 6px; vertical-align: middle; }
+.chip.exit { border-left: 6px solid var(--exit); }
+.ck.exit { color: var(--exit); font-weight: 700; }
+.exitbox { border: 2px solid var(--exit); border-radius: 10px; padding: 8px 10px; }
+.exithead { font-weight: 800; color: var(--exit); }
 .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
 .chip[aria-pressed="true"] small { color: var(--accent-ink); }
 .checks { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -393,15 +400,31 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
     </div>
     <label class="f" for="e-dmodel">図面の型番（姿図・器具表）<input type="text" id="e-dmodel" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
     <label class="f" for="e-model">器具型番（現地の銘板）<input type="text" id="e-model" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+    <label class="f" for="e-pmodel">公共型番（銘板にあれば）<input type="text" id="e-pmodel" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
     <div class="row" id="e-dwrap" hidden><button type="button" class="small" id="e-dsame">図面の型番と同じ</button><span class="pill bad" id="e-ddiff" hidden>図面と相違</span></div>
     <button type="button" id="e-past">過去の記録から型番を探す（圏外でも使えます）</button>
     <div id="e-pastres" style="display:flex;flex-direction:column;gap:8px"></div>
     <label class="f" for="e-lamp">ランプ型番<input type="text" id="e-lamp" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+    <div class="f lampwn">ランプのW数・灯数
+      <div class="row" style="flex-wrap:nowrap;align-items:center"><input type="text" id="e-lampw" inputmode="decimal" autocomplete="off" aria-label="ランプのW数" placeholder="例：32" style="width:5.5rem;flex:none"><span>W ×</span><input type="text" id="e-lampn" inputmode="numeric" autocomplete="off" aria-label="灯数" placeholder="灯数" style="width:4.5rem;flex:none"><span>灯</span></div>
+      <div class="chipsel" id="e-lampn-chips" role="group" aria-label="灯数"></div>
+    </div>
     <label class="f" for="e-ballast">安定器型番<input type="text" id="e-ballast" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
     <div class="grid2" id="e-bat-wrap" hidden>
       <label class="f" for="e-battery">バッテリー型番<input type="text" id="e-battery" class="mono" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="例：FK123"></label>
       <label class="f" for="e-batspec">バッテリー電圧・容量<input type="text" id="e-batspec" autocomplete="off" placeholder="例：4.8V 2500mAh"></label>
     </div>
+    <div id="e-exit-wrap" class="exitbox" hidden>
+      <div class="exithead">誘導灯</div>
+      <label class="f" for="e-xtype">種類<select id="e-xtype"></select></label>
+      <label class="f" for="e-xclass">級<select id="e-xclass"></select></label>
+      <label class="f" for="e-xtime">点灯時間<select id="e-xtime"></select></label>
+      <label class="f" for="e-xpanel">パネル<select id="e-xpanel"></select></label>
+      <label class="f" for="e-xmount">器具の形（埋込・直付）<select id="e-xmount"></select></label>
+      <p class="note">器具記号の情報なので、同じ記号の全部に入ります。</p>
+      <div id="e-exitlinks" class="lrows"></div>
+    </div>
+    <label class="f" for="e-year">製造年<input type="text" id="e-year" inputmode="numeric" autocomplete="off" placeholder="例：2008" style="max-width:8rem"></label>
     <div class="grid2">
       <label class="f" for="e-src">光源の種類<select id="e-src"></select></label>
       <label class="f" for="e-out" id="e-out-wrap">出力（蛍光灯）<select id="e-out"></select></label>
@@ -553,7 +576,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
 <script>
 (function () {
 'use strict';
-var APP_VER = '1.1.32';
+var APP_VER = '1.1.41';
 
 /* ====================================================================
    定数
@@ -588,6 +611,8 @@ var KINDS = [
 ];
 var DIMS = { outer: '仕上り外径（丸はφ、四角はW×D mm）', cutout: '開口（φmm）', cutoutWD: '開口（W×D mm）', depth: '埋込深さ（mm）', pitch: '取付ピッチ（mm）' };
 var CAT = { general: '一般照明', exit: '誘導灯', emergency: '非常用照明' };
+var EXIT_TYPES = ['避難口', '通路', '階段通路（階段灯）'], EXIT_CLASSES = ['A級', 'B級BH', 'B級BL', 'C級'], EXIT_TIMES = ['20分', '60分'], EXIT_PANELS = ['片面', '両面'], EXIT_MOUNTS = ['埋込', '直付'];
+var EXIT_FIELDS = { exitType: 'e-xtype', exitClass: 'e-xclass', exitTime: 'e-xtime', exitPanel: 'e-xpanel', exitMount: 'e-xmount' };
 var PHOTO_KINDS = ['器具全体', '銘板', 'ランプ', '取付状況', '寸法確認', '仕様書', 'その他'];
 var CCT_METHODS = ['目視', '銘板', '仕様書', '未確認'];
 var H_METHODS = ['実測', '図面', '目測', '未確認'];
@@ -665,7 +690,7 @@ var PLACE_GROUPS = [
   ['屋外・駐車場', ['ゴミ置場', '駐輪場', '駐車場', '機械式駐車場', '車路', 'ピロティ', '外周', '植栽', 'アプローチ', '屋上設備置場', 'バルコニー']]
 ];
 var PLACES = [].concat.apply([], PLACE_GROUPS.map(function (g) { return g[1]; }));
-var KIND_LABEL = { fixture: '器具', lamp: 'ランプ', ballast: '安定器', battery: 'バッテリー', other: 'その他' };
+var KIND_LABEL = { fixture: '器具', public: '公共型番', unknown: '不明', lamp: 'ランプ', ballast: '安定器', battery: 'バッテリー', other: 'その他' };
 
 /* ====================================================================
    小道具
@@ -699,6 +724,10 @@ function hasQ(s) { return /[?？]/.test(s || ''); }
 function kindOf(id) { return KINDS.find(function (k) { return k.id === id; }); }
 function kindName(id) { var k = kindOf(id); return k ? k.name : ''; }
 function catOf(fx) { var k = fx && kindOf(fx.kind); return (k && k.cat) || 'general'; }
+function isExit(fx) { return catOf(fx) === 'exit'; }
+function xc(fx) { return isExit(fx) ? ' exit' : ''; }
+// 誘導灯の情報：避難口 B級BL 片面 20分
+function exitLabel(f) { if (!isExit(f)) return ''; return [f.exitType ? f.exitType.replace('（階段灯）', '') : '', f.exitMount ? f.exitMount + '形' : '', f.exitClass, f.exitPanel, f.exitTime].filter(Boolean).join(' '); }
 function makerOf(id) { return MAKERS.find(function (m) { return m.id === id; }); }
 function makerName(id) { var m = makerOf(id); return m ? m.name.replace(/（.*?）/g, '') : ''; }
 function gsearch(q) { return 'https://www.google.com/search?q=' + encodeURIComponent(q); }
@@ -807,7 +836,12 @@ async function saveVerified(ops) {
     var o = ops[i], key = o[0] === 'put' ? o[2][STORES[o[1]]] : o[2];
     var back = await dbGet(o[1], key);
     if (o[0] === 'put') {
-      if (!back || fingerprint(back) !== fingerprint(o[2])) throw new Error('保存後の読み戻しが一致しませんでした（' + o[1] + '）');
+      if (!back) throw new Error('保存後の読み戻しが一致しませんでした（' + o[1] + '）');
+      if (fingerprint(back) !== fingerprint(o[2])) {
+        // 案件の情報（今いる階・場所など）は、ほぼ同時に別の保存が入ることがある。より新しい保存で置き換わっていれば正常
+        var newer = o[1] === 'projects' && back.id === o[2].id && (back.updatedAt || 0) >= (o[2].updatedAt || 0);
+        if (!newer) throw new Error('保存後の読み戻しが一致しませんでした（' + o[1] + '）');
+      }
     } else if (back) throw new Error('削除後もデータが残っています（' + o[1] + '）');
   }
 }
@@ -1156,7 +1190,7 @@ function recordRow(r) {
     fx && fx.needLookup ? h('span', { class: 'pill w', text: '帰社後に調べる' }) : null
   );
   var row = h('div', { class: 'item', style: 'cursor:pointer' },
-    h('span', { class: 'sym' + (fx ? '' : ' none'), text: fx ? fx.symbol : '?' }),
+    h('span', { class: 'sym' + (fx ? xc(fx) : ' none'), text: fx ? fx.symbol : '?' }),
     h('div', { class: 'body' },
       h('span', { class: 't', text: fx ? (kindName(fx.kind) || '種類未入力') : '写真のみ（あとで詳細を入力）' }),
       fx && fx.model ? h('span', { class: 'm', text: fx.model }) : null,
@@ -1227,6 +1261,7 @@ function quickQty(o) {
   var level = rec ? rec.level : S.p.current.level, place = rec ? rec.place : currentPlace();
   var val = '';
   var disp = h('div', { class: 'qtydisp empty', 'aria-live': 'polite', text: '数量を押してください' });
+  var zeroHint = rec ? h('p', { class: 'note', text: 'この場所に無いときは 0 を入れて保存します（記録が消えます）。' }) : null;
   function show() { disp.textContent = val || '数量を押してください'; disp.classList.toggle('empty', !val); }
   function press(k) {
     if (k === 'C') val = ''; else if (k === '⌫') val = val.slice(0, -1);
@@ -1245,7 +1280,9 @@ function quickQty(o) {
     lastQ ? h('button', { type: 'button', text: (rec ? '今の数 ' : '前回 ') + lastQ, onclick: function () { val = String(lastQ); show(); } }) : h('span'));
   async function save() {
     var n = parseInt(val, 10);
-    if (!(n >= 1)) { toast('数量を1以上で入れてください', true); return; }
+    if (n === 0 && rec) { closeOverlay(); await removeHere(rec); return; }
+    if (n === 0) { closeOverlay(); return; }
+    if (!(n >= 1)) { toast('数量を入れてください（ここに無いときは 0）', true); return; }
     var now = Date.now(), ops = [], r;
     // 数字で入れた数は「この数で正しい」と決めた数なので、予定があれば予定も同じ数にして確認済み（✓）にする
     if (rec) r = Object.assign({}, rec, { qty: n, cnt: n, updatedAt: now }, rec.plan != null ? { plan: n } : {});
@@ -1263,12 +1300,12 @@ function quickQty(o) {
     toast((rec ? '数量を変更しました：' : '保存しました：') + fx.symbol + ' ×' + n + '（' + lvLabel(r.level) + (r.place ? ' ' + r.place : '') + '）');
   }
   var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '数量を入れる' },
-    h('div', { class: 'row' }, h('span', { class: 'sym', text: fx.symbol }), h('div', { class: 'grow' },
+    h('div', { class: 'row' }, h('span', { class: 'sym' + xc(fx), text: fx.symbol }), h('div', { class: 'grow' },
       h('h2', { text: (kindName(fx.kind) || '種類未入力') + (fx.model ? '　' + fx.model : '') }),
       h('p', { class: 'note', text: lvLabel(level) + (place ? '　' + place : '　（設置場所なし）') + (rec ? 'の数量を変更' : 'に追加') }))),
     fxThumbPhoto(fx.id) ? h('button', { type: 'button', class: 'thumb', style: 'width:auto;flex-direction:row;gap:8px', onclick: function () { openFull(fxThumbPhoto(fx.id).id); } }, thumbImg(fxThumbPhoto(fx.id)), h('span', { text: 'この記号の写真（押すと大きく）' })) : null,
     !rec && !place ? h('div', { class: 'status err', text: '設置場所が空です。閉じて「候補」から場所を選ぶと、場所ごとに集計できます。' }) : null,
-    disp, pad, extra,
+    disp, zeroHint, pad, extra,
     h('button', { type: 'button', class: 'primary big', text: '保存', onclick: once(save) }),
     h('button', { type: 'button', text: '詳しく入力（写真・施工条件など）', onclick: function () { closeOverlay(); if (rec) openEditor({ recordId: rec.id }); else openEditor({ fixtureId: fx.id, copyFrom: src && src.id }); } }));
   overlay(sh);
@@ -1390,13 +1427,15 @@ function renderCountTab() {
     else if (r) { cntTxt = String(r.qty || 0); cls += ' done'; }
     else cntTxt = '0';
     var tap = h('button', { type: 'button', class: 'ctap', 'aria-label': f.symbol + ' を1台数える（今 ' + cntTxt + '）', onclick: function () { tap.classList.add('hit'); setTimeout(function () { tap.classList.remove('hit'); }, 150); countChange(f.id, 1); } },
-      h('span', { class: 'csym', text: f.symbol }),
+      h('span', { class: 'csym' + xc(f), text: f.symbol }),
       h('span', { class: 'ccnt', text: cntTxt + (r && recDone(r) && isPlanned(r) ? ' ✓' : '') }));
     var info = h('div', { class: 'cinfo' },
       ph ? thumbImg(ph) : h('span', { class: 'cnoimg', text: '写真なし' }),
       h('div', { class: 'ctx' },
-        h('span', { class: 'ck', text: kindName(f.kind) || '種類未入力' }),
+        h('span', { class: 'ck' + xc(f), text: kindName(f.kind) || '種類未入力' }),
+        exitLabel(f) ? h('span', { class: 'ck exit', style: 'white-space:normal;overflow:visible', text: exitLabel(f) }) : null,
         h('span', { class: 'cm', text: f.model || (f.drawingModel ? '図面 ' + f.drawingModel : '型番未入力') }),
+        lampLabel(f) ? h('span', { class: 'ck', text: 'ランプ ' + lampLabel(f) }) : null,
         fxDiff(f) ? h('span', { class: 'pill bad', text: '図面と相違' }) : null));
     var bar = h('div', { class: 'cbar' },
       h('button', { type: 'button', 'aria-label': f.symbol + ' を1台減らす', text: '−1', disabled: !r || (isPlanned(r) && r.cnt == null), onclick: function () { countChange(f.id, -1); } }),
@@ -1430,7 +1469,7 @@ function countMenu(fid) {
   var f = fxById(fid); if (!f) return;
   var lv = S.p.current.level, place = currentPlace(), r = recAt(fid, lv, place), ph = fxThumbPhoto(fid);
   var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': f.symbol + ' のメニュー' },
-    h('div', { class: 'row' }, h('span', { class: 'sym', text: f.symbol }), h('div', { class: 'grow' },
+    h('div', { class: 'row' }, h('span', { class: 'sym' + xc(f), text: f.symbol }), h('div', { class: 'grow' },
       h('h2', { text: (kindName(f.kind) || '種類未入力') }),
       h('p', { class: 'note', text: '現地 ' + (f.model || '未入力') + (f.drawingModel ? '／図面 ' + f.drawingModel : '') + '　' + lvLabel(lv) + ' ' + place }))));
   if (fxDiff(f)) sh.append(h('div', { class: 'status err', text: '図面の型番と現地の型番が違います。' }));
@@ -1438,6 +1477,7 @@ function countMenu(fid) {
     var n = await confirmPlanned([r]); if (n > 0) { closeOverlay(); renderSurvey(); toast(f.symbol + ' を予定どおり ' + r.plan + '台で確認済みにしました'); }
   }) }));
   sh.append(h('button', { type: 'button', class: r ? '' : 'primary', text: 'ここだけ型番が違う（新しい記号を作る）', onclick: once(function () { return makeVariant(fid); }) }));
+  sh.append(h('button', { type: 'button', text: 'ここだけランプが違う（器具型番は同じ）', onclick: once(function () { return makeVariant(fid, 'lamp'); }) }));
   if (f.drawingModel && !f.model) sh.append(h('button', { type: 'button', text: '現地の型番は図面どおり（' + f.drawingModel + '）', onclick: once(async function () {
     var nf = Object.assign({}, f, { model: f.drawingModel, updatedAt: Date.now() });
     try { await saveVerified([['put', 'fixtures', nf]]); } catch (e) { toast('保存できませんでした：' + errText(e), true); return; }
@@ -1446,6 +1486,8 @@ function countMenu(fid) {
   if (ph) sh.append(h('button', { type: 'button', text: '写真を見る（見比べる）', onclick: function () { closeOverlay(); photoViewer(ph.id); } }));
   if (!r || (isPlanned(r) && r.cnt == null)) sh.append(h('button', { type: 'button', text: r ? '予定数を直す（数える前）' : '予定数を入れる（数える前）', onclick: function () { closeOverlay(); planSheet(fid); } }));
   sh.append(h('button', { type: 'button', text: r && isPlanned(r) && r.cnt !== r.plan ? '数を数字で入れる（入れた数で ✓）' : '数を数字で入れる', onclick: function () { closeOverlay(); quickQty(r ? { fixtureId: fid, recordId: r.id } : { fixtureId: fid, copyFrom: (condSource(fid, lv) || {}).id }); } }));
+  // コピーした予定などで、この場所に無かったとき
+  if (r && r.cnt == null) sh.append(h('button', { type: 'button', text: 'ここには無い（0台にする）', onclick: once(async function () { closeOverlay(); await removeHere(r); }) }));
   if (r) sh.append(h('button', { type: 'button', text: 'この場所の記録を開く（写真・施工条件）', onclick: function () { closeOverlay(); openEditor({ recordId: r.id }); } }));
   sh.append(h('button', { type: 'button', text: '器具情報（型番・仕様）', onclick: function () { closeOverlay(); openEditor({ fixtureOnly: fid }); } }),
     h('button', { type: 'button', text: '閉じる', onclick: closeOverlay }));
@@ -1490,37 +1532,52 @@ function planSheet(fid) {
     h('button', { type: 'button', class: 'primary big', text: '予定数を保存', onclick: once(save) }));
   show(); overlay(sh);
 }
-/* 同じ記号で一部の場所だけ型番が違う器具：A → A-2 を作り、この場所に1台入れる */
-function variantSymbol(base) {
-  // かっこ付きは、かっこの中に付ける：(A) → (A-2)、(A321) → (A321-2)。かっこなしは A → A-2
+/* 同じ記号で一部の場所だけ型番が違う器具：A → 元を A-1、違う器具を A-2 にして、この場所に1台入れる */
+function variantName(root, i) {
+  // かっこ付きは、かっこの中に付ける：(A) → (A-1)、(A321) → (A321-2)。かっこなしは A → A-1
+  var m = /^\((.*)\)$/.exec(root);
+  return m ? '(' + m[1] + '-' + i + ')' : root + '-' + i;
+}
+function variantSymbol(root, skip) {
   var used = {}; S.fixtures.forEach(function (f) { used[f.symbol] = 1; });
-  var m = /^\((.*)\)$/.exec(base);
-  for (var i = 2; i < 100; i++) { var c = m ? '(' + m[1] + '-' + i + ')' : base + '-' + i; if (!used[c]) return c; }
+  if (skip) used[skip] = 1;
+  for (var i = 2; i < 100; i++) { var c = variantName(root, i); if (!used[c]) return c; }
   return '';
 }
-async function makeVariant(fid) {
+async function makeVariant(fid, mode) {
+  var lampOnly = mode === 'lamp';   // 器具型番は同じでランプだけ違う
   var f = fxById(fid); if (!f) return;
   var base = f.variantOf && fxById(f.variantOf) ? fxById(f.variantOf) : f;
-  var sym = variantSymbol(base.symbol);
+  var root = base.drawingSymbol || base.symbol;   // 図面の記号（A）
+  // 初めて分けるときは、元の器具も A → A-1 にする
+  var baseNew = null;
+  if (!base.drawingSymbol) {
+    var one = variantName(root, 1);
+    if (!S.fixtures.some(function (x) { return x.symbol === one; })) baseNew = Object.assign({}, base, { symbol: one, drawingSymbol: root, updatedAt: Date.now() });
+  }
+  var sym = variantSymbol(root, baseNew ? baseNew.symbol : null);
   if (!sym) { toast('記号を作れませんでした', true); return; }
   var lv = S.p.current.level, place = currentPlace(), now = Date.now(), ops = [];
-  var nf = { id: uid('fx'), projectId: S.p.id, symbol: sym, kind: base.kind, maker: base.maker, model: '', drawingModel: base.drawingModel || base.model || '',
-    lamp: '', ballast: '', battery: '', batterySpec: '', source: '', output: '', cct: '', cctMethod: '', watt: '', volt: base.volt || '',
-    dims: JSON.parse(JSON.stringify(base.dims || {})), ambience: !!base.ambience, needLookup: false, highCri: false,
-    memo: base.symbol + ' と同じ記号で型番違い（図面は ' + base.symbol + '）', spec: '', cands: [], variantOf: base.id, createdAt: now, updatedAt: now };
+  if (baseNew) ops.push(['put', 'fixtures', baseNew]);
+  var nf = { id: uid('fx'), projectId: S.p.id, symbol: sym, drawingSymbol: root, kind: base.kind, maker: base.maker, model: lampOnly ? base.model || '' : '', drawingModel: base.drawingModel || base.model || '',
+    lamp: '', lampW: '', lampN: '', ballast: '', battery: '', batterySpec: '', source: '', output: '', cct: '', cctMethod: '', watt: '', volt: base.volt || '',
+    dims: JSON.parse(JSON.stringify(base.dims || {})), ambience: !!base.ambience, year: lampOnly ? base.year || '' : '', exitType: base.exitType || '', exitClass: base.exitClass || '', exitTime: base.exitTime || '', exitPanel: base.exitPanel || '', exitMount: base.exitMount || '', needLookup: false, highCri: false,
+    memo: (baseNew ? baseNew.symbol : base.symbol) + (lampOnly ? ' と同じ器具型番でランプ違い' : ' と同じ記号で型番違い') + '（図面は ' + root + '）', spec: '', cands: [], variantOf: base.id, createdAt: now, updatedAt: now };
   ops.push(['put', 'fixtures', nf]);
   var r = copyConditions(blankRecord(), recAt(f.id, lv, place) || condSource(f.id, lv), nf);
   r.fixtureId = nf.id; r.level = lv; r.place = place; r.qty = 1; r.cnt = 1; r.plan = null; r.status = 'ok'; r.createdAt = now; r.updatedAt = now;
   ops.push(['put', 'records', r]);
   // 予定に入っていた元の記号の1台が、型番違いだったので予定から1台減らす
   var orig = recAt(f.id, lv, place), origNew = null, origDel = false;
-  if (orig && isPlanned(orig) && orig.plan > 0) {
+  // 予定数まで数え終わっていたら（違う器具は予定の外の1台）、予定は減らさない
+  if (orig && isPlanned(orig) && orig.plan > 0 && !(orig.cnt != null && orig.cnt >= orig.plan)) {
     if (orig.plan > 1) { origNew = Object.assign({}, orig, { plan: orig.plan - 1, updatedAt: now }); if (origNew.cnt == null) origNew.qty = origNew.plan; ops.push(['put', 'records', origNew]); }
     else if (orig.cnt == null && !photosOfRecord(orig.id).length) { origDel = true; ops.push(['del', 'records', orig.id]); }
   }
   var np = Object.assign({}, S.p, { updatedAt: now, current: { level: lv, place: place } });
   ops.push(['put', 'projects', np]);
   try { await saveVerified(ops); } catch (e) { toast('保存できませんでした：' + errText(e), true); return; }
+  if (baseNew) replaceIn(S.fixtures, baseNew);
   S.fixtures.push(nf); S.records.push(r); S.p = np;
   if (origNew) replaceIn(S.records, origNew);
   if (origDel) S.records = S.records.filter(function (x) { return x.id !== orig.id; });
@@ -1529,9 +1586,10 @@ async function makeVariant(fid) {
   var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '型番違いの記号を作りました' },
     h('p', { class: 'note', text: 'iPad係に伝えてください' }),
     h('div', { class: 'bigsym', text: sym }),
-    h('p', { text: lvLabel(lv) + ' ' + place + ' の ' + base.symbol + ' のうち1台は型番違い → ' + sym + '（この場所に1台入れました）' }),
-    origNew || origDel ? h('p', { class: 'note', text: base.symbol + ' の予定数を1台減らしました。' }) : null,
-    h('button', { type: 'button', class: 'primary big', text: '銘板を撮って型番を入れる', onclick: function () { closeOverlay(); openEditor({ recordId: r.id, pkind: '銘板' }); setSpecFold(false); } }),
+    baseNew ? h('p', { class: 'note', text: '元の ' + root + ' は ' + baseNew.symbol + ' に変えました（図面の記号は ' + root + ' のまま）。' }) : null,
+    h('p', { text: lvLabel(lv) + ' ' + place + ' の ' + root + ' のうち1台は' + (lampOnly ? 'ランプ違い' : '型番違い') + ' → ' + sym + '（この場所に1台入れました）' }),
+    origNew || origDel ? h('p', { class: 'note', text: (baseNew ? baseNew.symbol : base.symbol) + ' の予定数を1台減らしました。' }) : null,
+    h('button', { type: 'button', class: 'primary big', text: lampOnly ? 'ランプを撮ってランプ型番を入れる' : '銘板を撮って型番を入れる', onclick: function () { closeOverlay(); openEditor({ recordId: r.id, pkind: lampOnly ? 'ランプ' : '銘板' }); setSpecFold(false); } }),
     h('button', { type: 'button', text: 'あとで入れる（数え続ける）', onclick: function () { closeOverlay(); renderSurvey(); } }));
   overlay(sh);
 }
@@ -1540,6 +1598,24 @@ function levelsWithRecords() {
   var set = {};
   S.records.forEach(function (r) { if (r.fixtureId && r.level !== S.p.current.level) set[r.level] = (set[r.level] || 0) + 1; });
   return set;
+}
+/* ここには無い（0台）：コピーした予定などで、この場所に無かった記録を消す */
+async function removeHere(rec) {
+  rec = recById(rec.id); if (!rec) return false;
+  var f = fxById(rec.fixtureId) || {}, ph = photosOfRecord(rec.id);
+  if (ph.length) {
+    var c = await ask(lvLabel(rec.level) + ' ' + (rec.place || '') + ' の ' + (f.symbol || '') + ' を 0台にします。この記録の写真 ' + ph.length + ' 枚も消えます。', [{ label: '0台にする', value: 'y', cls: 'danger' }, { label: 'やめる', value: 'n' }]);
+    if (c !== 'y') return false;
+  }
+  var ops = [['del', 'records', rec.id]];
+  ph.forEach(function (p) { ops.push(['del', 'photos', p.id]); ops.push(['del', 'photoData', p.id]); });
+  try { await saveVerified(ops); } catch (e) { toast('保存できませんでした：' + errText(e), true); return false; }
+  deleteCloudAssets(ph.map(function (x) { return x.assetId; }));
+  S.records = S.records.filter(function (r) { return r.id !== rec.id; });
+  S.photos = S.photos.filter(function (p) { return p.recordId !== rec.id; });
+  touchProject(); renderSurvey();
+  toast((rec.place || '') + ' の ' + (f.symbol || '') + ' は「ここには無い（0台）」にしました');
+  return true;
 }
 function copySourceLevel() {
   var set = levelsWithRecords(), l = S.p.current.level, guard = 0;
@@ -1563,7 +1639,7 @@ function copyFloorSheet(srcLevel) {
       .forEach(function (r) {
         var f = fxById(r.fixtureId); if (!f) return;
         var cb = h('input', { type: 'checkbox', checked: true, 'data-rid': r.id, style: 'width:24px;height:24px;flex:none' });
-        list.append(h('label', { class: 'item', style: 'align-items:center' }, cb, h('span', { class: 'sym', text: f.symbol }),
+        list.append(h('label', { class: 'item', style: 'align-items:center' }, cb, h('span', { class: 'sym' + xc(f), text: f.symbol }),
           h('div', { class: 'body' }, h('span', { class: 't', text: (kindName(f.kind) || '') + '　×' + r.qty }), h('span', { class: 's', text: r.place || '（場所未入力）' }))));
       });
   }
@@ -1622,11 +1698,13 @@ function leaveFloor(nx) {
       var ot = h('div', { class: 'list' });
       off.forEach(function (r) {
         var f = fxById(r.fixtureId);
-        ot.append(h('div', { class: 'item', style: 'align-items:center' }, h('span', { class: 'sym', text: f.symbol }),
+        ot.append(h('div', { class: 'item', style: 'align-items:center' }, h('span', { class: 'sym' + xc(f), text: f.symbol }),
           h('div', { class: 'body' }, h('span', { class: 't', text: r.place || '（場所未入力）' }), h('span', { class: 's', text: r.cnt == null ? '未確認（予定 ' + r.plan + '）' : '確認 ' + r.cnt + ' / 予定 ' + r.plan })),
-          h('button', { type: 'button', class: 'small', text: '予定どおり', onclick: once(async function () { if (await confirmPlanned([recById(r.id)]) > 0) { closeOverlay(); renderSurvey(); leaveFloor(nx); } }) })));
+          h('div', { class: 'row', style: 'gap:6px;flex-wrap:wrap;justify-content:flex-end' },
+            h('button', { type: 'button', class: 'small', text: '予定どおり', onclick: once(async function () { if (await confirmPlanned([recById(r.id)]) > 0) { closeOverlay(); renderSurvey(); leaveFloor(nx); } }) }),
+            r.cnt == null ? h('button', { type: 'button', class: 'small', text: 'ここには無い（0台）', onclick: once(async function () { closeOverlay(); if (await removeHere(r)) leaveFloor(nx); }) }) : null)));
       });
-      sh.append(h('div', { class: 'status err', text: '予定と違う・未確認の記録が ' + off.length + ' 件あります。数え直すか「予定どおり」を押してください（表の数量は今の数です）。' }), ot);
+      sh.append(h('div', { class: 'status err', text: '予定と違う・未確認の記録が ' + off.length + ' 件あります。数え直すか「予定どおり」か「ここには無い（0台）」を押してください（表の数量は今の数です）。' }), ot);
     }
     var uns = recs.filter(function (r) { return !r.fixtureId; }).length;
     if (uns) sh.append(h('div', { class: 'status err', text: '未整理（写真のみ）の記録が ' + uns + ' 件あります（数量に入っていません）。' }));
@@ -1946,13 +2024,13 @@ function renderFixturesTab() {
       var t = fixtureTotals(f.id);
       var lv = Object.keys(t.lv).sort(function (a, b) { return lvRank(a) - lvRank(b); }).map(function (l) { return lvLabel(l) + ' ' + t.lv[l]; }).join('・');
       var row = h('div', { class: 'item' },
-        h('span', { class: 'sym', text: f.symbol }),
+        h('span', { class: 'sym' + xc(f), text: f.symbol }),
         h('div', { class: 'body' },
-          h('span', { class: 't', text: kindName(f.kind) || '種類未入力' }),
+          h('span', { class: 't', text: kindName(f.kind) || '種類未入力' }, isExit(f) && exitLabel(f) ? h('span', { class: 'xbadge', style: 'margin-left:6px', text: exitLabel(f) }) : null),
           f.model ? h('span', { class: 'm', text: f.model }) : null,
           f.drawingModel && f.drawingModel !== f.model ? h('span', { class: 's', text: '図面 ' + f.drawingModel }) : null,
           fxDiff(f) ? h('span', { class: 'pill bad', text: '図面と相違' }) : null,
-          h('span', { class: 's', text: [makerName(f.maker), f.lamp ? 'ランプ ' + f.lamp : '', f.watt ? f.watt + 'W' : ''].filter(Boolean).join(' / ') }),
+          h('span', { class: 's', text: [makerName(f.maker), f.lamp ? 'ランプ ' + f.lamp : '', lampLabel(f), f.watt ? '消費' + f.watt + 'W' : '', f.year ? f.year + '年製' : ''].filter(Boolean).join(' / ') }),
           h('span', { class: 's', text: lv || '（設置記録なし）' })
         ),
         h('div', { class: 'side' },
@@ -2191,7 +2269,7 @@ var DW_TYPES = [['plan', '平面図'], ['elev', '姿図・器具表'], ['other',
 function isDrawing(p) { return !!p && p.kind === '図面'; }
 function drawings() { return S.photos.filter(isDrawing).sort(function (a, b) { return (a.dwName || '').localeCompare(b.dwName || '', 'ja', { numeric: true }) || a.createdAt - b.createdAt; }); }
 function plansOf(level) { return drawings().filter(function (d) { return d.dwType === 'plan' && (d.dwLevels || []).indexOf(level) >= 0; }); }
-function elevsOf(fid) { var f = fxById(fid); if (!f) return []; return drawings().filter(function (d) { return d.dwType === 'elev' && (d.dwSymbols || []).indexOf(f.symbol) >= 0; }); }
+function elevsOf(fid) { var f = fxById(fid); if (!f) return []; return drawings().filter(function (d) { var ss = d.dwSymbols || []; return d.dwType === 'elev' && (ss.indexOf(f.symbol) >= 0 || (f.drawingSymbol && ss.indexOf(f.drawingSymbol) >= 0)); }); }
 function dwLabel(d) {
   if (d.dwType === 'plan') return '平面図　' + ((d.dwLevels || []).map(lvLabel).join('・') || '階が未設定');
   if (d.dwType === 'elev') return '姿図　' + ((d.dwSymbols || []).join('・') || '記号が未設定');
@@ -2390,7 +2468,7 @@ function setSpecFold(fold) {
   var c = $('e-speccard'); c.classList.toggle('folded', !!fold);
   $('e-spectoggle').textContent = fold ? '表示して直す' : '隠す';
   var f = readFixtureForm(), d = f.dims || {};
-  var sum = [makerName(f.maker), f.model, f.drawingModel && f.drawingModel !== f.model ? '図面 ' + f.drawingModel : '', f.lamp ? 'ランプ ' + f.lamp : '', f.cct, f.watt ? f.watt + 'W' : '', Object.keys(d).map(function (k) { return d[k]; }).join('・')].filter(Boolean).join(' / ');
+  var sum = [makerName(f.maker), f.model, f.drawingModel && f.drawingModel !== f.model ? '図面 ' + f.drawingModel : '', f.lamp ? 'ランプ ' + f.lamp : '', lampLabel(f), f.cct, f.watt ? '消費' + f.watt + 'W' : '', Object.keys(d).map(function (k) { return d[k]; }).join('・')].filter(Boolean).join(' / ');
   $('e-specsum').hidden = !fold; $('e-specsum').textContent = sum || '（仕様は未入力）';
 }
 function loadFixtureFields(fx) {
@@ -2400,7 +2478,9 @@ function loadFixtureFields(fx) {
   $('e-maker').value = fx ? fx.maker || '' : '';
   $('e-model').value = fx ? fx.model || '' : '';
   $('e-dmodel').value = fx ? fx.drawingModel || '' : '';
+  $('e-pmodel').value = fx ? fx.publicModel || '' : '';
   $('e-lamp').value = fx ? fx.lamp || '' : '';
+  $('e-lampw').value = fx ? fx.lampW || '' : ''; $('e-lampn').value = fx ? fx.lampN || '' : ''; drawLampN();
   $('e-ballast').value = fx ? fx.ballast || '' : '';
   $('e-src').value = fx ? fx.source || '' : '';
   $('e-out').value = fx ? fx.output || '' : '';
@@ -2416,6 +2496,8 @@ function loadFixtureFields(fx) {
   $('e-volt').value = fx ? fx.volt || '' : '';
   $('e-battery').value = fx ? fx.battery || '' : '';
   $('e-batspec').value = fx ? fx.batterySpec || '' : '';
+  $('e-year').value = fx ? fx.year || '' : '';
+  Object.keys(EXIT_FIELDS).forEach(function (k) { $(EXIT_FIELDS[k]).value = fx ? fx[k] || '' : ''; }); updateExitVis();
   // 以前の記録で、バッテリーの型番（FK…）がランプ型番に、容量（mAh）が電源電圧に入っていたものは移す（保存すると反映）
   var moved = [];
   if (fx && !$('e-battery').value && isBatteryModel($('e-lamp').value)) { $('e-battery').value = norm($('e-lamp').value); $('e-lamp').value = ''; moved.push('バッテリー型番'); }
@@ -2467,7 +2549,7 @@ function renderChips(keepFind) {
   var list = sortedFixtures().filter(function (f) { return f.id === E.fixtureId || fxMatches(f); });
   if (S.fixtures.length >= 8 && symFilterOn() && !list.length) box.append(h('span', { class: 'note', text: '合う記号がありません' }));
   list.forEach(function (f) {
-    box.append(h('button', { type: 'button', class: 'chip', 'aria-pressed': String(E.fixtureId === f.id), onclick: function () { selectFixture(f.id); } },
+    box.append(h('button', { type: 'button', class: 'chip' + xc(f), 'aria-pressed': String(E.fixtureId === f.id), onclick: function () { selectFixture(f.id); } },
       f.symbol + '　' + (kindName(f.kind) || ''), h('small', { text: f.model || (f.drawingModel ? '図面 ' + f.drawingModel : '型番未入力') })));
   });
 }
@@ -2483,6 +2565,7 @@ function selectFixture(fid) {
       if (!$('e-diff').value) $('e-diff').value = lr.difficulty || '';
     }
   }
+  if (fx && isExit(fx) && fx.exitMount) $('e-mount').value = fx.exitMount;   // 誘導灯は器具の形で決まる
   if (fx && !$('e-mount').value) { var k = kindOf(fx.kind); if (k && k.mount) $('e-mount').value = k.mount; }
   E.dirty = true;
   setSpecFold(specSettled(fx));
@@ -2546,8 +2629,9 @@ async function openFull(pid) {
 function readFixtureForm() {
   return {
     symbol: normSym($('e-symbol').value), kind: $('e-kind').value, maker: $('e-maker').value,
-    model: norm($('e-model').value), drawingModel: norm($('e-dmodel').value), lamp: norm($('e-lamp').value), ballast: norm($('e-ballast').value),
-    battery: norm($('e-battery').value), batterySpec: clean($('e-batspec').value),
+    model: norm($('e-model').value), drawingModel: norm($('e-dmodel').value), publicModel: norm($('e-pmodel').value), lamp: norm($('e-lamp').value), lampW: clean($('e-lampw').value), lampN: clean($('e-lampn').value), ballast: norm($('e-ballast').value),
+    battery: norm($('e-battery').value), batterySpec: clean($('e-batspec').value), year: clean($('e-year').value),
+    exitType: $('e-xtype').value, exitClass: $('e-xclass').value, exitTime: $('e-xtime').value, exitPanel: $('e-xpanel').value, exitMount: $('e-xmount').value,
     source: $('e-src').value, output: isFluor($('e-src').value) ? $('e-out').value : '',
     cct: clean($('e-cct').value), cctMethod: $('e-cctm').value, watt: clean($('e-watt').value), volt: clean($('e-volt').value),
     dims: readDims(), ambience: $('e-amb').checked, needLookup: $('e-lookup').checked, highCri: $('e-hicri').checked, memo: $('e-fxmemo').value.trim(), spec: $('e-spec').value.trim()
@@ -2565,7 +2649,7 @@ function readRecordForm() {
   };
 }
 function fixtureFormEmpty(f) {
-  return (!f.symbol || f.symbol === E.autoSym) && !f.kind && !f.maker && !f.model && !f.drawingModel && !f.lamp && !f.ballast && !f.battery && !f.watt && !Object.keys(f.dims).length;
+  return (!f.symbol || f.symbol === E.autoSym) && !f.kind && !f.maker && !f.model && !f.drawingModel && !f.publicModel && !f.lamp && !f.ballast && !f.battery && !f.watt && !Object.keys(f.dims).length;
 }
 function editorErr(msg) { var e = $('e-err'); e.textContent = msg; e.hidden = !msg; if (msg) e.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
 
@@ -2581,7 +2665,9 @@ async function addEditorPhotos(files) {
   if (!files.length) return;
   if (!(await ensureRecordPersisted())) return;
   var r = E.rec;
+  var pk = E.pkind;
   var res = await savePhotos(files, { recordId: r ? r.id : null, fixtureId: E.fixtureId, kind: E.pkind, level: r ? r.level : '', place: r ? r.place : '' });
+  if (!E) { if (res.saved.length) toast('写真 ' + res.saved.length + '枚を保存しました（' + pk + '）'); return; }   // 保存し終わる前に記録の画面を閉じたとき
   renderEditorPhotos();
   if (res.saved.length) {
     toast('写真 ' + res.saved.length + '枚を保存しました（' + E.pkind + '）');
@@ -2713,10 +2799,11 @@ async function offerDraft(d) {
   if (typeof d.openedNew === 'boolean') E.openedNew = d.openedNew;
   var f = d.fx || {};
   $('e-symbol').value = f.symbol || ''; $('e-kind').value = f.kind || ''; $('e-maker').value = f.maker || '';
-  $('e-model').value = f.model || ''; $('e-dmodel').value = f.drawingModel || ''; updateDiffVis(); $('e-lamp').value = f.lamp || ''; $('e-ballast').value = f.ballast || '';
+  $('e-model').value = f.model || ''; $('e-dmodel').value = f.drawingModel || ''; $('e-pmodel').value = f.publicModel || ''; updateDiffVis(); $('e-lamp').value = f.lamp || ''; $('e-lampw').value = f.lampW || ''; $('e-lampn').value = f.lampN || ''; drawLampN(); $('e-ballast').value = f.ballast || '';
   $('e-src').value = f.source || ''; $('e-out').value = f.output || ''; updateOutVis();
   setCct($('e-cct'), f.cct || ''); $('e-cctm').value = f.cctMethod || ''; $('e-watt').value = f.watt || ''; $('e-volt').value = f.volt || '';
   $('e-battery').value = f.battery || ''; $('e-batspec').value = f.batterySpec || ''; updateBatVis();
+  $('e-year').value = f.year || ''; Object.keys(EXIT_FIELDS).forEach(function (k) { $(EXIT_FIELDS[k]).value = f[k] || ''; }); updateExitVis();
   $('e-amb').checked = !!f.ambience; $('e-lookup').checked = !!f.needLookup; $('e-hicri').checked = !!f.highCri; $('e-fxmemo').value = f.memo || ''; $('e-spec').value = f.spec || '';
   renderDims(f.dims || {});
   if (d.rec) {
@@ -2858,12 +2945,17 @@ function aiPrompt() {
     '- 読めた文字をそのまま写す。読めない文字は1文字ごとに ? にする。推測で補わない。',
     '- 銘板に書かれていない項目は空文字にする。型番から仕様を推測して埋めない。',
     '- 器具の型番（形名・品番）、ランプの型番、安定器の型番、バッテリー（蓄電池・電池）の型番は別の項目に分ける。誘導灯・非常用照明のバッテリー（例：FK123）はランプ型番に入れない。',
+    '- 「公共型番」「公共形式」「公共施設用」と表示された型番は public_model に入れる。fixture_model（メーカーの器具の品番・形名）には入れない。',
+    '- ballast_model には「安定器」「点灯装置」「電源ユニット」と明記された型番だけを入れる。器具の品番を入れない。',
+    '- どの項目か分からない型番は、上の項目には入れず items に kind を unknown として書く。',
+    '- 製造年（製造年・製造年月・西暦や Made in の年）があれば year に西暦4桁で入れる（例 2008）。和暦（平成20年など）は西暦に直す。',
+    '- 誘導灯の銘板なら、表示されている級（A級・B級BH形・B級BL形・C級）を exit_class に、非常点灯時間（20分・60分）を exit_time に入れる。書かれていなければ空文字。',
     '- 0とO、1とI、5とS、8とB、2とZ は特に注意して判断する。',
     '- 品番の桁数を数え直し、同じ数字の連続（例：111）を落とさない。',
     '- color には光の色（色温度の K の数値、または電球色・温白色・白色・昼白色・昼光色などの光色名）だけを入れる。ホワイト、クールホワイト、シルバー、ブラックなど器具本体の色（仕上げ色）は color に入れず、items に kind を other として書く。光の色の表示がなければ空文字にする。',
     '- メーカー名やロゴが見えるときだけ maker を選ぶ。見えなければ unknown。National、ナショナル、松下電工、Panasonic はすべて panasonic にする。',
     '形式：',
-    '{"maker":"' + MAKERS.map(function (m) { return m.id; }).join('|') + '|unknown","fixture_model":"","lamp_model":"","ballast_model":"","battery_model":"バッテリー（蓄電池）の型番があれば","battery_spec":"バッテリーの電圧・容量（例 4.8V 2500mAh）があれば","watt":"消費電力（印字どおり）","voltage":"定格電圧（印字どおり）","color":"光色・色温度（印字どおり）","output":"定格出力・高出力の表示があれば印字どおり、なければ空文字","items":[{"label":"印字されていた項目名","value":"読み取った文字","kind":"fixture|lamp|ballast|other","confidence":"high|medium|low"}],"note":"読み取りにくかった点があれば一文、なければ空文字"}'
+    '{"maker":"' + MAKERS.map(function (m) { return m.id; }).join('|') + '|unknown","fixture_model":"","public_model":"公共型番の表示があれば","lamp_model":"","ballast_model":"","battery_model":"バッテリー（蓄電池）の型番があれば","battery_spec":"バッテリーの電圧・容量（例 4.8V 2500mAh）があれば","watt":"消費電力（印字どおり）","voltage":"定格電圧（印字どおり）","color":"光色・色温度（印字どおり）","output":"定格出力・高出力の表示があれば印字どおり、なければ空文字","year":"製造年（西暦4桁）があれば","exit_class":"誘導灯の級があれば","exit_time":"誘導灯の点灯時間があれば","items":[{"label":"印字されていた項目名","value":"読み取った文字","kind":"fixture|public|lamp|ballast|battery|unknown|other","confidence":"high|medium|low"}],"note":"読み取りにくかった点があれば一文、なければ空文字"}'
   ].join('\n');
 }
 var aiCtl = null;
@@ -2879,23 +2971,90 @@ function normalizeReading(d) {
   var out = { maker: '', fields: {}, items: [], note: '' };
   if (!d || typeof d !== 'object') return out;
   if (MAKERS.some(function (m) { return m.id === d.maker; })) out.maker = d.maker;
-  var map = { model: 'fixture_model', lamp: 'lamp_model', ballast: 'ballast_model', battery: 'battery_model', batspec: 'battery_spec', watt: 'watt', volt: 'voltage', cct: 'color', output: 'output' };
-  Object.keys(map).forEach(function (k) { var v = typeof d[map[k]] === 'string' ? clean(d[map[k]]) : ''; if (v) out.fields[k] = ['model', 'lamp', 'ballast', 'battery'].indexOf(k) >= 0 ? norm(v) : v; });
+  var map = { model: 'fixture_model', pmodel: 'public_model', lamp: 'lamp_model', ballast: 'ballast_model', battery: 'battery_model', batspec: 'battery_spec', watt: 'watt', volt: 'voltage', cct: 'color', output: 'output' };
+  Object.keys(map).forEach(function (k) { var v = typeof d[map[k]] === 'string' ? clean(d[map[k]]) : ''; if (v) out.fields[k] = ['model', 'pmodel', 'lamp', 'ballast', 'battery'].indexOf(k) >= 0 ? norm(v) : v; });
   if (out.fields.lamp && isBatteryModel(out.fields.lamp) && !out.fields.battery) { out.fields.battery = out.fields.lamp; delete out.fields.lamp; }
   if (out.fields.volt && /mAh/i.test(out.fields.volt) && !out.fields.batspec) { out.fields.batspec = out.fields.volt; delete out.fields.volt; }
   out.items = (Array.isArray(d.items) ? d.items : []).filter(function (x) { return x && typeof x.value === 'string' && x.value.trim(); });
-  [['model', 'fixture'], ['lamp', 'lamp'], ['ballast', 'ballast'], ['battery', 'battery']].forEach(function (p) {
-    if (!out.fields[p[0]]) { var it = out.items.find(function (i) { return i.kind === p[1]; }); if (it) out.fields[p[0]] = norm(it.value); }
+  // 項目名に「公共」とあるものは公共型番
+  out.items.forEach(function (it) { if (/公共/.test(it.label || '')) it.kind = 'public'; });
+  ['model', 'ballast', 'lamp'].forEach(function (k) {
+    var v = out.fields[k]; if (!v) return;
+    var it = out.items.find(function (i) { return norm(i.value) === v && i.kind === 'public'; });
+    if (it) { if (!out.fields.pmodel) out.fields.pmodel = v; delete out.fields[k]; }
   });
+  // どの欄か確かでないものは自動で入れず、選んでもらう（読めない文字 ? は今までどおり赤枠で入れる）
+  out.ask = [];
+  // 安定器の欄に、器具の品番らしいもの（項目名に安定器などの文字がない）が入ったときも選んでもらう
+  if (out.fields.ballast) {
+    var bi = out.items.find(function (i) { return norm(i.value) === out.fields.ballast; });
+    if (bi && bi.label && !/安定器|点灯|電源|ballast/i.test(bi.label)) { out.ask.push({ value: out.fields.ballast, guess: 'ballast', label: bi.label, why: '安定器と書かれていない' }); delete out.fields.ballast; }
+  }
+  [['model', 'fixture'], ['pmodel', 'public'], ['lamp', 'lamp'], ['ballast', 'ballast'], ['battery', 'battery']].forEach(function (p) {
+    if (!out.fields[p[0]] && !out.ask.some(function (a) { return a.guess === p[0]; })) { var it = out.items.find(function (i) { return i.kind === p[1]; }); if (it) out.fields[p[0]] = norm(it.value); }
+  });
+  // どの欄か分からない型番
+  out.items.forEach(function (it) {
+    var v = norm(it.value);
+    if (it.kind !== 'unknown') return;
+    if (out.ask.some(function (a) { return a.value === v; }) || Object.keys(out.fields).some(function (k) { return out.fields[k] === v; })) return;
+    out.ask.push({ value: v, guess: KIND_FIELD[it.kind] || '', label: it.label || '', why: 'どの欄か不明' });
+  });
+  out.year = parseYear(d.year);
+  out.exitClass = mapExitClass(d.exit_class); out.exitTime = mapExitTime(d.exit_time);
   out.note = typeof d.note === 'string' ? d.note : '';
   return out;
 }
-var FIELD_LABEL = { model: '器具型番', lamp: 'ランプ型番', ballast: '安定器型番', battery: 'バッテリー型番', batspec: 'バッテリー電圧・容量', watt: '消費電力', volt: '電源電圧', cct: '色温度・光色', output: '出力' };
-var FIELD_INPUT = { model: 'e-model', lamp: 'e-lamp', ballast: 'e-ballast', battery: 'e-battery', batspec: 'e-batspec', watt: 'e-watt', volt: 'e-volt', cct: 'e-cct', output: 'e-out' };
+function mapExitClass(v) {
+  v = typeof v === 'string' ? v.normalize('NFKC').toUpperCase().replace(/\s|形|型/g, '') : '';
+  if (!v) return '';
+  if (/BH/.test(v)) return 'B級BH'; if (/BL/.test(v)) return 'B級BL';
+  if (/^A/.test(v)) return 'A級'; if (/^C/.test(v)) return 'C級';
+  return '';
+}
+// 製造年：2008、2008.4、'08年製、平成20年、H20 などを西暦4桁に
+function parseYear(v) {
+  v = typeof v === 'string' || typeof v === 'number' ? String(v).normalize('NFKC') : ''; if (!v) return '';
+  var m = /(19[5-9]\d|20[0-4]\d)/.exec(v); if (m) return m[1];
+  var era = [[/(?:昭和|S)\s*(\d{1,2})/i, 1925], [/(?:平成|H)\s*(\d{1,2})/i, 1988], [/(?:令和|R)\s*(\d{1,2})/i, 2018]];
+  for (var i = 0; i < era.length; i++) { var e = era[i][0].exec(v); if (e) return String(era[i][1] + Number(e[1])); }
+  return '';
+}
+function mapExitTime(v) { v = typeof v === 'string' || typeof v === 'number' ? String(v).normalize('NFKC') : ''; return /60/.test(v) ? '60分' : /20/.test(v) ? '20分' : ''; }
+var KIND_FIELD = { fixture: 'model', public: 'pmodel', lamp: 'lamp', ballast: 'ballast', battery: 'battery' };
+var PICK_KEYS = ['model', 'pmodel', 'lamp', 'ballast', 'battery'];
+var PICK_LABEL = { model: '器具', pmodel: '公共', lamp: 'ランプ', ballast: '安定器', battery: 'バッテリー' };
+var FIELD_LABEL = { model: '器具型番', pmodel: '公共型番', lamp: 'ランプ型番', ballast: '安定器型番', battery: 'バッテリー型番', batspec: 'バッテリー電圧・容量', watt: '消費電力', volt: '電源電圧', cct: '色温度・光色', output: '出力' };
+var FIELD_INPUT = { model: 'e-model', pmodel: 'e-pmodel', lamp: 'e-lamp', ballast: 'e-ballast', battery: 'e-battery', batspec: 'e-batspec', watt: 'e-watt', volt: 'e-volt', cct: 'e-cct', output: 'e-out' };
 function updateOutVis() { $('e-out-wrap').hidden = !isFluor($('e-src').value); }
 // バッテリー欄：誘導灯・非常用照明、または値が入っているときに出す
+var PANA_EXIT = 'https://www2.panasonic.biz/jp/lighting/facilities/exit-sign/search/';
+// 誘導灯の後継機種を探すボタン（型番の始まりやメーカーに関係なく出す）
+function renderExitLinks() {
+  var box = $('e-exitlinks'); if (!box) return;
+  var m = norm($('e-model').value).replace(/[?？]/g, '').split(' ')[0], pm = norm($('e-pmodel').value).replace(/[?？]/g, '');
+  var q = m || pm, list = [];
+  list.push({ t: 'パナソニック 誘導灯リニューアル品番検索', s: q ? '品番 ' + q + ' で開きます。ナショナルなど他社・旧品番も入れてみてください' : '開いた先で既設の品番を入れます', u: PANA_EXIT + (q ? '?hinban=' + encodeURIComponent(q) : '') });
+  var alt = m.replace(/^FA[A-Z]+(?=\d)/, 'FA');
+  if (m && alt !== m) list.push({ t: '英字を除いた品番（' + alt + '）でリニューアル品番検索', s: '途中に英字がある品番は、色指定などの特注品の可能性があります。標準品の結果を目安にしてください', u: PANA_EXIT + '?hinban=' + encodeURIComponent(alt) });
+  if (q) list.push({ t: '後継機種を広く探す', s: q + ' 誘導灯 後継・リニューアルで検索', u: gsearch(q + ' 誘導灯 後継 リニューアル') });
+  box.replaceChildren(h('div', { class: 'exithead', style: 'margin-top:6px', text: '後継機種を探す' }));
+  list.forEach(function (l) { box.append(h('a', { class: 'lrow', href: l.u, target: '_blank', rel: 'noopener noreferrer' }, h('span', { class: 't' }, l.t, h('small', { text: l.s })), h('span', { class: 'go', text: '開く ↗' }))); });
+}
+function updateExitVis() { $('e-exit-wrap').hidden = !(/^exit$/.test($('e-kind').value) || Object.keys(EXIT_FIELDS).some(function (k) { return $(EXIT_FIELDS[k]).value; })); renderLinks(); }
 function updateBatVis() { $('e-bat-wrap').hidden = !(/^(exit|emergency)$/.test($('e-kind').value) || $('e-battery').value || $('e-batspec').value); }
 function isBatteryModel(v) { return /^FK\d{2,4}/.test(norm(v)); }
+// ランプ型番からW数を推定（FHF32→32、FL40→40、FHT24→24、FPL36→36 など。蛍光灯の型番だけ）
+function guessLampW(v) {
+  var m = /^(FHF|FHT|FHP|FHD|FHC|FHG|FPL|FDL|FML|FLR|FL|FCL|FWL|FPR|FGL|FHL)(\d{2,3})/.exec(norm(v).replace(/[^A-Z0-9]/g, ''));
+  return m ? String(Number(m[2])) : '';
+}
+function autoLampW() { if (!$('e-lampw').value) { var w = guessLampW($('e-lamp').value); if (w) { $('e-lampw').value = w; scheduleDraft(); } } }
+function lampLabel(f) { return f ? ((f.lampW ? f.lampW + 'W' : '') + (f.lampN ? (f.lampW ? '×' : '') + f.lampN + '灯' : '')) : ''; }
+function drawLampN() {
+  var box = $('e-lampn-chips'); box.replaceChildren(); var v = $('e-lampn').value;
+  ['1', '2', '3', '4'].forEach(function (n) { box.append(h('button', { type: 'button', 'aria-pressed': String(v === n), text: n + '灯', onclick: function () { $('e-lampn').value = v === n ? '' : n; drawLampN(); scheduleDraft(); } })); });
+}
 function autoSource() { if (!$('e-src').value) { var g = guessSource($('e-lamp').value); if (g) { $('e-src').value = g; updateOutVis(); } } }
 function aiStatus(msg, cls) { var s = $('e-ai'); s.hidden = !msg; s.textContent = msg || ''; s.className = 'status' + (cls ? ' ' + cls : ''); }
 async function runReading(blob) {
@@ -2924,6 +3083,10 @@ function applyReading(d, method) {
   var box = $('e-aires'); box.replaceChildren();
   var filled = [], conflicts = [], unc = [], bodyColor = '';
   if (d.maker && !$('e-maker').value) { $('e-maker').value = d.maker; filled.push('メーカー'); }
+  if (d.year && !$('e-year').value) { $('e-year').value = d.year; filled.push('製造年'); }
+  if (d.exitClass && !$('e-xclass').value) { $('e-xclass').value = d.exitClass; filled.push('誘導灯の級'); }
+  if (d.exitTime && !$('e-xtime').value) { $('e-xtime').value = d.exitTime; filled.push('点灯時間'); }
+  if (d.exitClass || d.exitTime) { if (!$('e-kind').value) { $('e-kind').value = 'exit'; filled.push('器具種類'); } updateExitVis(); }
   Object.keys(d.fields).forEach(function (k) {
     var v = d.fields[k], inp = $(FIELD_INPUT[k]), cur = inp.value.trim();
     if (hasQ(v)) unc.push(FIELD_LABEL[k]);
@@ -2948,13 +3111,21 @@ function applyReading(d, method) {
   if (d.fields.output && !$('e-src').value) { $('e-src').value = SOURCES[0]; }
   updateOutVis();
   markUnc(); scheduleDraft(); renderLinks();
-  if (!Object.keys(d.fields).length && !d.items.length) {
+  var ask = d.ask || [];
+  if (!Object.keys(d.fields).length && !d.items.length && !ask.length && !d.year && !d.exitClass) {
     aiStatus('型番を読み取れませんでした。文字が大きく写るように撮り直すか、手入力してください。写真は保存済みです。', 'err'); return;
   }
   aiStatus((filled.length ? '空欄に反映しました：' + filled.join('、') + '。' : '空欄への反映はありません。') +
     (unc.length ? '読めない文字（?）があります：' + unc.join('、') + '。未確認として赤枠で残しています。' : '') +
     (bodyColor ? '「' + bodyColor + '」は器具本体の色と思われるため、色温度には入れていません。' : '') +
+    (ask.length ? '分からないものが' + ask.length + '件あります。下で入れる欄を選んでください。' : '') +
     '必ず銘板と見比べて確認してください。' + (d.note ? '（' + d.note + '）' : ''), unc.length ? 'err' : 'ok');
+  if (ask.length) {
+    var card = h('div', { class: 'card askpick', style: 'margin-top:8px' }, h('h3', { text: '分からないもの：入れる欄を選んでください' }),
+      h('p', { class: 'note', text: '銘板と見比べて、どの欄の型番か選びます。違う欄を押し直すと入れ替わります。' }));
+    ask.forEach(function (a) { card.append(pickRow(a.value, a.label + (a.why ? '（' + a.why + '）' : ''), '')); });
+    box.append(card);
+  }
   if (conflicts.length) {
     box.append(h('h3', { text: '入力済みの値と違う読み取り結果' }));
     conflicts.forEach(function (c) {
@@ -2967,15 +3138,40 @@ function applyReading(d, method) {
     var det = h('details', {}, h('summary', { text: '読み取った文字の一覧（' + d.items.length + '件）' }));
     d.items.forEach(function (it) {
       var lowc = it.confidence === 'low' || hasQ(it.value);
-      det.append(h('div', { class: 'item', style: 'padding:6px 0' },
-        h('div', { class: 'body' }, h('span', { class: 'm', text: it.value }), h('span', { class: 's', text: (it.label || '') + (KIND_LABEL[it.kind] ? '（' + KIND_LABEL[it.kind] + '）' : '') })),
-        h('div', { class: 'side' }, h('span', { class: 'pill' + (lowc ? ' w' : ''), text: hasQ(it.value) ? '読めない文字あり' : ({ high: '確度 高', medium: '確度 中', low: '確度 低' }[it.confidence] || '') }),
-          h('div', { class: 'row' }, ['model', 'lamp', 'ballast', 'battery'].map(function (k) {
-            return h('button', { type: 'button', class: 'small', text: { model: '器具', lamp: 'ランプ', ballast: '安定器', battery: 'バッテリー' }[k], onclick: function () { $(FIELD_INPUT[k]).value = norm(it.value); markUnc(); scheduleDraft(); renderLinks(); toast(FIELD_LABEL[k] + 'に入れました'); } });
-          })))));
+      var conf = hasQ(it.value) ? '読めない文字あり' : ({ high: '確度 高', medium: '確度 中', low: '確度 低' }[it.confidence] || '');
+      det.append(h('div', { class: 'item', style: 'padding:6px 0;display:block' },
+        h('div', { class: 'row', style: 'align-items:baseline;flex-wrap:wrap;gap:4px 8px' },
+          h('span', { style: 'font-family:var(--font-mono);font-weight:700;word-break:break-all', text: it.value }),
+          conf ? h('span', { class: 'pill' + (lowc ? ' w' : ''), text: conf }) : null),
+        h('div', { class: 'note', text: (it.label || '') + (KIND_LABEL[it.kind] ? '（' + KIND_LABEL[it.kind] + '）' : '') }),
+        pickChips(norm(it.value))));
     });
     box.append(det);
   }
+}
+
+/* 読み取った型番を入れる欄を選ぶ：器具・公共・ランプ・安定器・バッテリー・入れない */
+function pickedField(v) { return PICK_KEYS.find(function (k) { return norm($(FIELD_INPUT[k]).value) === v; }) || ''; }
+function pickChips(v) {
+  var row = h('div', { class: 'chipsel pick', role: 'group', 'aria-label': v + ' を入れる欄' });
+  function draw() {
+    var cur = pickedField(v); row.replaceChildren();
+    PICK_KEYS.concat(['']).forEach(function (k) {
+      row.append(h('button', { type: 'button', 'aria-pressed': String(cur === k), text: k ? PICK_LABEL[k] : '入れない', onclick: function () {
+        var was = pickedField(v);
+        if (was) $(FIELD_INPUT[was]).value = '';
+        if (k) $(FIELD_INPUT[k]).value = v;
+        updateBatVis(); markUnc(); scheduleDraft(); renderLinks();
+        document.querySelectorAll('#e-aires .chipsel.pick').forEach(function (r) { if (r.__draw) r.__draw(); });
+        toast(k ? FIELD_LABEL[k] + 'に入れました' : (was ? FIELD_LABEL[was] + 'から外しました' : '入れません'));
+      } }));
+    });
+  }
+  row.__draw = draw; draw(); return row;
+}
+function pickRow(v, sub) {
+  return h('div', { class: 'item', style: 'padding:6px 0;display:block' },
+    h('div', { style: 'font-family:var(--font-mono);font-weight:700;word-break:break-all', text: v }), h('div', { class: 'note', text: sub || '' }), pickChips(v));
 }
 
 /* ====================================================================
@@ -3003,7 +3199,7 @@ function makerLinks(maker, m, eol) {
     out.push({ t: '旧ブランド名でも探す', s: 'ナショナル・松下電工時代の古い品番向け', u: gsearch(m + ' ナショナル 松下電工 仕様書') });
     out.push({ t: '生産終了品の案内（蛍光灯器具の一覧）', s: 'パナソニックの生産終了品と代替品のページ', u: 'https://www2.panasonic.biz/jp/lighting/conventional/fluorescent/list.html' });
   }
-  if (maker.id === 'panasonic' && /^(FA|NNFA|KE|KEC)/.test(m)) {
+  if (maker.id === 'panasonic' && $('e-exit-wrap').hidden && /^(FA|NNFA|KE|KEC|SA)/.test(m)) {
     var ex = 'https://www2.panasonic.biz/jp/lighting/facilities/exit-sign/search/?hinban=';
     var base = m.split(' ')[0];
     var alt = base.replace(/^FA[A-Z]+(?=\d)/, 'FA');
@@ -3013,21 +3209,26 @@ function makerLinks(maker, m, eol) {
   return out;
 }
 function renderLinks() {
+  renderExitLinks();
   var box = $('e-links'); if (!box) return;
   box.replaceChildren();
   var m = norm($('e-model').value).replace(/[?？]/g, ''), eol = $('e-eol').checked;
   if (!m) { box.append(h('p', { class: 'note', text: '器具型番を入力すると、検索リンクが表示されます。' })); return; }
   var list = [], mk = makerOf($('e-maker').value);
-  if (mk) list = list.concat(makerLinks(mk, m, eol));
-  list.push({ t: 'メーカーを問わず仕様書PDFを探す', s: 'メーカー不明でも使えます', u: gsearch(m + ' 照明 仕様書 filetype:pdf') });
-  if (eol) {
-    list.push({ t: '生産終了・後継品を広く探す', s: '販売店や施工会社の資料も含みます', u: gsearch(m + ' 照明 生産終了 後継品') });
-    list.push({ t: '代替品・互換品を探す', s: '更新時の置き換え候補', u: gsearch(m + ' 照明 代替品 後継機種') });
+  // 同じ中身の検索は1つにまとめる
+  var exitShown = !$('e-exit-wrap').hidden;   // 誘導灯は緑の枠の「後継機種を探す」を使う
+  if (mk) list = list.concat(makerLinks(mk, m, eol).filter(function (l) { return !exitShown || !/後継|代替|蛍光灯器具/.test(l.t + l.s); }));
+  else {
+    list.push({ t: '仕様書PDFを探す', s: 'メーカー不明でも使えます', u: gsearch(m + ' 照明 仕様書 filetype:pdf') });
+    if (eol && !exitShown) list.push({ t: '生産終了・後継品を探す', s: '製造中止の案内、後継機種・代替品', u: gsearch(m + ' 照明 生産終了 後継品') });
   }
+  if (exitShown) list.push({ t: '後継機種は上の緑の枠から', s: '誘導灯の「後継機種を探す」を使ってください', u: '#e-exit-wrap' });
+  var seen = {}; list = list.filter(function (l) { if (seen[l.u]) return false; seen[l.u] = 1; return true; });
   var lamp = norm($('e-lamp').value).replace(/[?？]/g, '');
   if (lamp) list.push({ t: 'ランプ型番（' + lamp + '）のLED代替を探す', s: 'ランプ交換で済むかの確認用', u: gsearch(lamp + ' LED 代替 ランプ') });
   var wrap = h('div', { class: 'lrows' });
   list.forEach(function (l) {
+    if (l.u.charAt(0) === '#') { wrap.append(h('button', { type: 'button', class: 'lrow', onclick: function () { $('e-exit-wrap').scrollIntoView({ block: 'start', behavior: 'smooth' }); } }, h('span', { class: 't' }, l.t, h('small', { text: l.s })), h('span', { class: 'go', text: '上へ ↑' }))); return; }
     var a = h('a', { class: 'lrow', href: l.u, target: '_blank', rel: 'noopener noreferrer' },
       h('span', { class: 't' }, l.t, h('small', { text: l.s })), h('span', { class: 'go', text: '開く ↗' }));
     if (l.copy) a.addEventListener('click', function () { try { navigator.clipboard.writeText(l.copy).catch(function () {}); } catch (e) {} });
@@ -3082,7 +3283,9 @@ function applyPast(f) {
   fill('e-model', f.model, '器具型番');
   if (f.kind && !$('e-kind').value) { $('e-kind').value = f.kind; filled.push('器具種類'); }
   if (f.maker && !$('e-maker').value) { $('e-maker').value = f.maker; filled.push('メーカー'); }
-  fill('e-lamp', f.lamp, 'ランプ型番'); fill('e-ballast', f.ballast, '安定器型番'); fill('e-battery', f.battery, 'バッテリー型番'); fill('e-batspec', f.batterySpec, 'バッテリー電圧・容量'); updateBatVis();
+  fill('e-pmodel', f.publicModel, '公共型番'); fill('e-lamp', f.lamp, 'ランプ型番'); fill('e-lampw', f.lampW, 'ランプのW数'); fill('e-lampn', f.lampN, '灯数'); drawLampN(); fill('e-ballast', f.ballast, '安定器型番'); fill('e-battery', f.battery, 'バッテリー型番'); fill('e-batspec', f.batterySpec, 'バッテリー電圧・容量'); updateBatVis();
+  fill('e-year', f.year, '製造年');
+  Object.keys(EXIT_FIELDS).forEach(function (k) { if (f[k] && !$(EXIT_FIELDS[k]).value) { $(EXIT_FIELDS[k]).value = f[k]; if (filled.indexOf('誘導灯の情報') < 0) filled.push('誘導灯の情報'); } });
   if (f.source && !$('e-src').value) { $('e-src').value = f.source; filled.push('光源の種類'); }
   if (f.output && !$('e-out').value) { $('e-out').value = f.output; filled.push('出力'); }
   autoSource(); updateOutVis();
@@ -3164,26 +3367,41 @@ async function saveFile(name, data, mime) {
 function dateTag() { var d = new Date(); return d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()); }
 function timeTag() { var d = new Date(); return pad(d.getHours()) + pad(d.getMinutes()); }
 async function exportLedgerCsv() {
-  var head = ['案件', '階', '設置場所', '器具記号', '器具種類', '区分', 'メーカー', '器具型番', '図面の型番', '図面との相違', 'ランプ型番', '安定器型番', 'バッテリー型番', 'バッテリー電圧・容量', '光源の種類', '出力（定格／高出力）', '数量', '予定数', '現地確認', '色温度・光色', '高演色型', '色温度の確認方法', '消費電力(W)', '電源電圧',
+  await doSave('器具台帳_' + fileSafe(S.p.name) + '_' + dateTag() + '.csv', csvText(ledgerRows()), 'text/csv');
+}
+function ledgerRows() {
+  var head = ['案件', '階', '設置場所', '器具記号', '器具種類', '区分', 'メーカー', '器具型番', '公共型番', '図面の型番', '図面との相違', 'ランプ型番', 'ランプW数', '灯数', '安定器型番', 'バッテリー型番', 'バッテリー電圧・容量', '製造年', '誘導灯の種類', '誘導灯の級', '点灯時間', 'パネル', '誘導灯の形', '光源の種類', '出力（定格／高出力）', '数量', '予定数', '現地確認', '色温度・光色', '高演色型', '色温度の確認方法', '消費電力(W)', '電源電圧',
     '仕上り外径', '開口（φ）', '開口（W×D）', '埋込深さ', '取付ピッチ', '点灯状況', '劣化状況', '天井高さ(m)', '取付高さ(m)', '天井内の有効高さ(mm)', '高さの確認方法', '取付方式', '交換難易度', '必要な機材',
     'リニューアルプレート', '既設開口の利用', '補修', '防水・防湿', '施工上の注意', '調査の種類', '症状', '確認したこと', '原因（推定）', 'その場の処置', '今後の対応（提案）', '使用用途', 'そのまま交換', '所見', '雰囲気重視', '仕様書URL', 'LED更新候補', '写真枚数', '要確認', '帰社後に調べる', '記録の状態', '更新日時'];
   var rows = [head];
   S.records.slice().sort(function (a, b) { return lvRank(a.level) - lvRank(b.level) || (a.place || '').localeCompare(b.place || '', 'ja') || ((fxById(a.fixtureId) || {}).symbol || '').localeCompare((fxById(b.fixtureId) || {}).symbol || ''); }).forEach(function (r) {
     var f = fxById(r.fixtureId) || {}, d = f.dims || {};
-    rows.push([S.p.name, lvLabel(r.level), r.place, f.symbol, kindName(f.kind), f.kind ? CAT[catOf(f)] : '', makerName(f.maker), f.model, f.drawingModel, fxDiff(f) ? '相違' : '', f.lamp, f.ballast, f.battery, f.batterySpec, f.source, f.output, r.fixtureId ? r.qty : '', r.plan == null ? '' : r.plan, r.fixtureId ? countLabel(r) : '', isBodyColor(f.cct) ? '' : f.cct, f.highCri ? '○' : '', f.cctMethod, f.watt, f.volt,
+    rows.push([S.p.name, lvLabel(r.level), r.place, f.symbol, kindName(f.kind), f.kind ? CAT[catOf(f)] : '', makerName(f.maker), f.model, f.publicModel || '', f.drawingModel, fxDiff(f) ? '相違' : '', f.lamp, f.lampW, f.lampN, f.ballast, f.battery, f.batterySpec, f.year || '', f.exitType || '', f.exitClass || '', f.exitTime || '', f.exitPanel || '', f.exitMount || '', f.source, f.output, r.fixtureId ? r.qty : '', r.plan == null ? '' : r.plan, r.fixtureId ? countLabel(r) : '', isBodyColor(f.cct) ? '' : f.cct, f.highCri ? '○' : '', f.cctMethod, f.watt, f.volt,
       d.outer, d.cutout, d.cutoutWD, d.depth, d.pitch, r.lit, r.det, r.ceilH, r.mountH, r.ceilSpace, r.hMethod, r.mount, r.difficulty, (r.access || []).join('・'),
       r.plate, r.reuse, r.repair, r.wet, r.notes,
       r.single ? sgKindLabel(r.single.kind) : '', r.single ? (r.single.symptoms || []).join('・') : '', r.single ? (r.single.checks || []).join('・') : '', r.single ? (r.single.causes || []).join('・') : '', r.single ? (r.single.done || []).join('・') : '', r.single ? (r.single.proposals || []).join('・') : '', r.single ? r.single.usage || '' : '', r.single ? r.single.swap || '' : '', r.single ? r.single.memo || '' : '',
       f.ambience ? '○' : '', f.spec, (f.cands || []).map(function (c) { return c.model; }).filter(Boolean).join(' / '),
       photosOfRecord(r.id).length, [f.model, f.lamp, f.ballast].some(hasQ) ? '読めない文字あり' : '', f.needLookup ? '○' : '', r.fixtureId ? '記録済' : '未整理（写真のみ）', stamp(r.updatedAt)]);
   });
-  await doSave('器具台帳_' + fileSafe(S.p.name) + '_' + dateTag() + '.csv', csvText(rows), 'text/csv');
+  return rows;
 }
 async function exportSummaryCsv() {
+  await doSave('器具集計_' + fileSafe(S.p.name) + '_' + dateTag() + '.csv', csvText(summaryRows()), 'text/csv');
+}
+// 後継機種を探す検索（表に入れる）：誘導灯はパナソニックのリニューアル品番検索、ほかは「型番 メーカー 生産終了 後継」
+function succUrl(f) {
+  var m = String(f.model || f.publicModel || '').replace(/[?？]/g, '').trim().split(' ')[0];
+  if (!m) return '';
+  if (isExit(f)) return PANA_EXIT + '?hinban=' + encodeURIComponent(m);
+  var mk = makerOf(f.maker);
+  return gsearch(m + ' ' + (mk ? shortName(mk) : '照明') + ' 生産終了 後継');
+}
+function succCell(f) { var u = succUrl(f); if (u && u.length > 240) return u; return u ? '=HYPERLINK("' + u.replace(/"/g, '%22') + '","' + (isExit(f) ? '誘導灯リニューアル検索' : '後継品を検索') + '")' : '型番なし'; }
+function summaryRows() {
   var s = summarize(), rows = [['■ 器具種類別'], ['区分', '器具種類', '数量']];
   Object.keys(s.byKind).sort().forEach(function (k) { var p = k.split('|'); rows.push([CAT[p[0]], p[1], s.byKind[k]]); });
-  rows.push(['合計', '', s.total], [], ['■ 器具記号別'], ['器具記号', '器具種類', 'メーカー', '器具型番', '図面の型番', '図面との相違', 'ランプ型番', '数量']);
-  sortedFixtures().forEach(function (f) { rows.push([f.symbol, kindName(f.kind), makerName(f.maker), f.model, f.drawingModel, fxDiff(f) ? '相違' : '', f.lamp, fixtureTotals(f.id).q]); });
+  rows.push(['合計', '', s.total], [], ['■ 器具記号別'], ['器具記号', '器具種類', 'メーカー', '器具型番', '図面の型番', '図面との相違', 'ランプ型番', 'ランプW数', '灯数', '製造年', '誘導灯', '数量', '後継機種を探す（押すと検索）', '後継機種（記入欄）', '後継機種のメモ']);
+  sortedFixtures().forEach(function (f) { rows.push([f.symbol, kindName(f.kind), makerName(f.maker), f.model, f.drawingModel, fxDiff(f) ? '相違' : '', f.lamp, f.lampW, f.lampN, f.year || '', exitLabel(f), fixtureTotals(f.id).q, succCell(f), '', '']); });
   var syms = sortedFixtures().map(function (f) { return f.symbol; });
   rows.push([], ['■ 階別'], ['階'].concat(syms, ['計']));
   Object.keys(s.byLevel).sort(function (a, b) { return lvRank(a) - lvRank(b); }).forEach(function (l) {
@@ -3191,7 +3409,7 @@ async function exportSummaryCsv() {
   });
   rows.push([], ['■ 施工条件別'], ['項目', '内容', '数量']);
   Object.keys(s.cond).sort().forEach(function (k) { var p = k.split('|'); rows.push([p[0], p[1], s.cond[k]]); });
-  await doSave('器具集計_' + fileSafe(S.p.name) + '_' + dateTag() + '.csv', csvText(rows), 'text/csv');
+  return rows;
 }
 async function doSave(name, data, mime) {
   try {
@@ -3274,6 +3492,12 @@ async function buildBackup(pids) {
       pm.push(meta);
     }
     manifest.projects.push({ project: p, fixtures: fx, records: recs, photos: pm });
+  }
+  // 今開いている案件だけのZIPには、表（台帳・集計のCSV）も入れる。会社のPCでZIPを開けばExcelで見られる
+  if (pids.length === 1 && S.p && S.p.id === pids[0] && manifest.projects.length) {
+    var tag = fileSafe(S.p.name) + '_' + dateTag();
+    files.unshift({ name: '器具集計_' + tag + '.csv', data: enc.encode(csvText(summaryRows())) });
+    files.unshift({ name: '器具台帳_' + tag + '.csv', data: enc.encode(csvText(ledgerRows())) });
   }
   files.unshift({ name: 'backup.json', data: enc.encode(JSON.stringify(manifest, null, 1)) });
   return { zip: makeZip(files), manifest: manifest };
@@ -3373,7 +3597,7 @@ function renderSingle() {
   items.forEach(function (r) {
     var f = fxById(r.fixtureId) || {}, ph = photosOfRecord(r.id), s = r.single || {};
     list.append(h('button', { type: 'button', class: 'item', style: 'text-align:left;width:100%', onclick: function () { openEditor({ recordId: r.id }); } },
-      h('span', { class: 'sym', text: f.symbol || '' }),
+      h('span', { class: 'sym' + xc(f), text: f.symbol || '' }),
       h('span', { class: 'body' },
         h('span', { class: 't', text: (r.place || '（場所未入力）') + '　' + sgKindLabel(s.kind) }),
         h('span', { class: 's', text: [makerName(f.maker), f.model].filter(Boolean).join(' ') || '型番未入力' }),
@@ -3404,7 +3628,7 @@ function reportData() {
     var f = fxById(r.fixtureId) || {}, s = r.single || {}, d = f.dims || {};
     var phs = photosOfRecord(r.id).filter(function (x) { return !isDrawing(x); }).sort(function (a, b) { return order.indexOf(a.kind) - order.indexOf(b.kind) || a.createdAt - b.createdAt; }).slice(0, 4);
     var list = [['設置場所', r.place || ''], ['器具', [kindName(f.kind), [makerName(f.maker), f.model].filter(Boolean).join(' ')].filter(Boolean).join('　')],
-      ['ランプ', [f.lamp, f.source, isBodyColor(f.cct) ? '' : f.cct].filter(Boolean).join('　')], ['電源電圧', f.volt], ['数量', r.qty > 1 ? r.qty + '台' : '']];
+      ['ランプ', [f.lamp, lampLabel(f), f.source, isBodyColor(f.cct) ? '' : f.cct].filter(Boolean).join('　')], ['誘導灯', exitLabel(f)], ['製造年', f.year ? f.year + '年' : ''], ['電源電圧', f.volt], ['数量', r.qty > 1 ? r.qty + '台' : '']];
     if (s.kind === 'replace') list = list.concat([['開口', d.cutout || d.cutoutWD || ''], ['仕上り外径', d.outer || ''], ['天井内の有効高さ', r.ceilSpace ? r.ceilSpace + 'mm' : ''],
       ['取付方式', r.mount], ['設置環境', r.wet], ['使用用途', s.usage], ['そのまま交換できるか', s.swap], ['施工上の注意', r.notes]]);
     else list = list.concat([['症状', (s.symptoms || []).join('、')], ['確認したこと', (s.checks || []).join('、')], ['原因（推定）', (s.causes || []).join('、')], ['その場の処置', (s.done || []).join('、')]]);
@@ -3561,7 +3785,7 @@ function nextStepCard() {
   }
   var lines = [];
   if (!recsLv.length && nFx) {
-    var src = copySourceLevel();
+    var src = /^(EX|PH)/.test(lv) ? null : copySourceLevel();   // 外構・塔屋は階と並びが違うのでコピーはすすめない
     card.append(h('h2', { text: '次にやること：' + lvLabel(lv) + 'を始める' }));
     if (plans.length) card.append(h('button', { type: 'button', text: lvLabel(lv) + 'の平面図を見る', onclick: function () { openFull(plans[0].id); } }));
     if (src) card.append(h('button', { type: 'button', class: 'primary', text: lvLabel(src) + 'からコピーして予定にする（回って確認）', onclick: function () { copyFloorSheet(src); } }));
@@ -4042,10 +4266,14 @@ function wire() {
   fillSelect($('e-cct'), CCT_LIST); fillSelect(document.querySelector('#e-cform [data-c="cct"]'), CCT_LIST);
   fillSelect($('e-cctm'), CCT_METHODS); fillSelect($('e-src'), SOURCES); fillSelect($('e-out'), OUTPUTS);
   $('e-src').addEventListener('change', updateOutVis);
-  $('e-lamp').addEventListener('change', autoSource); fillSelect($('e-hm'), H_METHODS); fillSelect($('e-mount'), MOUNTS); fillSelect($('e-diff'), DIFFS);
+  $('e-lamp').addEventListener('change', autoSource); $('e-lamp').addEventListener('change', autoLampW);
+  $('e-lampn').addEventListener('input', drawLampN); fillSelect($('e-hm'), H_METHODS); fillSelect($('e-mount'), MOUNTS); fillSelect($('e-diff'), DIFFS);
   fillSelect($('e-plate'), YN3); fillSelect($('e-reuse'), REUSE); fillSelect($('e-repair'), YN3); fillSelect($('e-wet'), WET);
   fillSelect($('e-lit'), LIT); fillSelect($('e-det'), DET);
-  ['e-lit', 'e-det', 'e-hm', 'e-mount', 'e-diff', 'e-plate', 'e-reuse', 'e-repair', 'e-wet'].forEach(function (id) { chipSelect($(id)); });
+  fillSelect($('e-xtype'), EXIT_TYPES); fillSelect($('e-xclass'), EXIT_CLASSES); fillSelect($('e-xtime'), EXIT_TIMES); fillSelect($('e-xpanel'), EXIT_PANELS); fillSelect($('e-xmount'), EXIT_MOUNTS);
+  ['e-lit', 'e-det', 'e-hm', 'e-mount', 'e-diff', 'e-plate', 'e-reuse', 'e-repair', 'e-wet', 'e-xtype', 'e-xclass', 'e-xtime', 'e-xpanel', 'e-xmount'].forEach(function (id) { chipSelect($(id)); });
+  // 誘導灯は器具の形で埋込・直付が決まるので、取付方式にも同じものを入れる
+  $('e-xmount').addEventListener('change', function () { if (this.value) { $('e-mount').value = this.value; scheduleDraft(); } });
   heightChips($('e-ceil'), HEIGHTS); heightChips($('e-mh'), HEIGHTS);
   ACCESS.forEach(function (a) { $('e-access').append(h('label', {}, h('input', { type: 'checkbox', value: a }), a)); });
   CCT_LIST.forEach(function (c) { $('cctlist').append(h('option', { value: c })); });
@@ -4107,6 +4335,7 @@ function wire() {
     renderDims(readDims());
     var k = kindOf($('e-kind').value);
     if (k && k.mount && !$('e-mount').value) $('e-mount').value = k.mount;
+    updateExitVis(); updateBatVis();
     renderCands();
   });
   useSymKeypad($('e-symbol'));
@@ -4122,7 +4351,7 @@ function wire() {
   $('e-kind').addEventListener('change', updateBatVis);
   ['e-model', 'e-dmodel'].forEach(function (id) { $(id).addEventListener('input', updateDiffVis); });
   $('e-dsame').addEventListener('click', function () { $('e-model').value = norm($('e-dmodel').value); updateDiffVis(); markUnc(); renderLinks(); scheduleDraft(); });
-  ['e-model', 'e-maker', 'e-lamp', 'e-eol'].forEach(function (id) { $(id).addEventListener('input', renderLinks); $(id).addEventListener('change', renderLinks); });
+  ['e-model', 'e-pmodel', 'e-maker', 'e-lamp', 'e-eol'].forEach(function (id) { $(id).addEventListener('input', renderLinks); $(id).addEventListener('change', renderLinks); });
   ['e-amb', 'e-watt', 'e-cct', 'e-model'].forEach(function (id) { $(id).addEventListener('change', renderCands); });
   $('e-spec').addEventListener('input', updateSpecOpen);
   $('e-past').addEventListener('click', pastSearch);
@@ -4244,7 +4473,7 @@ async function boot() {
   renderHome(); renderStoreStatus();
   initCaps().then(function () { if (view === 'edit' && E) renderEditorPhotos(); });
 }
-window.__ledSurvey = { S: S, dbAll: dbAll, version: APP_VER, mapCct: mapCct };
+window.__ledSurvey = { S: S, dbAll: dbAll, version: APP_VER, mapCct: mapCct, saveVerified: saveVerified };
 boot();
 })();
 </script>

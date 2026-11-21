@@ -2,7 +2,7 @@
 // 画面のファイルだけをキャッシュします。調査データ（案件・写真）は端末内のIndexedDBにあり、ここでは扱いません。
 // index.html を更新したら CACHE の版数を上げてください。
 // 更新時は GitHub 側の一時保存（約10分）を通さず、必ず最新のファイルを取りに行きます。
-const CACHE = 'led-survey-1.1.32';
+const CACHE = 'led-survey-1.1.41';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {
