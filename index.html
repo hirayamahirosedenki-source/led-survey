@@ -163,6 +163,23 @@ details[open] > summary::before { content: "▾"; }
 .ov { position: fixed; inset: 0; z-index: 20; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; }
 /* iPhoneで長い確認画面が下までスクロールできないことへの対策：中身を縮めずに、画面の中だけでスクロールさせる */
 .sheet > * { flex-shrink: 0; }
+/* 器具記号をまとめて登録：図面を見ながら入れる */
+.bulkform { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.dwpanel { display: flex; flex-direction: column; gap: 6px; border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: var(--surface); }
+.bulkgrid .dwpanel { position: sticky; top: 34px; z-index: 1; box-shadow: 0 4px 10px rgba(0,0,0,.12); }
+.dwpanel.hide .dwimg, .dwpanel.hide .dwzoom { display: none; }
+.dwpanel .dwhide { white-space: nowrap; flex: none; }
+.dwpanel .dwimg { height: 30vh; height: 30dvh; overflow: auto; background: #fff; border-radius: 6px; -webkit-overflow-scrolling: touch; }
+.dwpanel .dwimg img { display: block; width: 100%; height: auto; }
+.dwpanel select { min-width: 0; flex: 1 1 auto; }
+.sheet.bulkwide { max-width: 40rem; }
+@media (min-width: 900px) {
+  .sheet.bulkwide { max-width: 82rem; }
+  .bulkgrid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+  .bulkgrid .dwpanel { top: 30px; box-shadow: none; }
+  .dwpanel .dwhide { display: none; }
+  .bulkgrid .dwpanel .dwimg { height: 74vh; height: 74dvh; }
+}
 .sheet { -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
 html.ovopen, html.ovopen body { overflow: hidden; }
 .sheet { background: var(--surface); color: var(--ink); width: 100%; max-width: 40rem; max-height: 92vh; max-height: 92dvh; overflow-y: auto; border-radius: 16px 16px 0 0; padding: 16px 14px calc(16px + var(--sab)); display: flex; flex-direction: column; gap: 12px; }
@@ -576,7 +593,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
 <script>
 (function () {
 'use strict';
-var APP_VER = '1.1.45';
+var APP_VER = '1.1.46';
 
 /* ====================================================================
    定数
@@ -1921,8 +1938,45 @@ function lastRecordOf(fid) {
   return S.records.filter(function (r) { return r.fixtureId === fid; }).sort(function (a, b) { return (b.updatedAt || 0) - (a.updatedAt || 0); })[0] || null;
 }
 // 調査前に、Goodnotesの器具記号と種類だけを先に登録する（型番などは現場で追記）
+var dwLast = null;   // 登録画面で最後に見ていた図面
+// 図面を見る小さな画面（姿図・器具表を先に並べる）。入力の途中で閉じずに見られる
+function drawingPanel() {
+  var list = drawings().slice().sort(function (a, b) {
+    var r = function (d) { return d.dwType === 'elev' ? 0 : d.dwType === 'other' || !d.dwType ? 1 : 2; };
+    return r(a) - r(b) || (a.createdAt || 0) - (b.createdAt || 0) || (a.dwPage || 1) - (b.dwPage || 1);
+  });
+  if (!list.length) return h('div', { class: 'dwpanel' }, h('p', { class: 'note', text: '図面がまだありません。「図面」から器具表・姿図のPDFを入れると、ここで見ながら入れられます。' }));
+  var idx = Math.max(0, list.findIndex(function (d) { return d.id === dwLast; }));
+  var z = 1, sel = h('select', { 'aria-label': '見る図面' }), img = h('img', { alt: '図面' }), box = h('div', { class: 'dwimg' }, img), zl = h('span', { class: 'note', text: '全体' });
+  list.forEach(function (d, i) { sel.append(h('option', { value: String(i), text: (d.dwType === 'elev' ? '【姿図・器具表】' : d.dwType === 'plan' ? '【平面図】' : '') + (d.dwName || '図面') })); });
+  async function show() {
+    var d = list[idx]; dwLast = d.id; sel.value = String(idx);
+    var key = 'full_' + d.id;
+    if (!S.urls[key]) { try { S.urls[key] = URL.createObjectURL(await photoBlob(d.id)); } catch (e) { toast(errText(e), true); return; } }
+    img.src = S.urls[key]; box.scrollTop = 0; box.scrollLeft = 0;
+  }
+  function zoom(n) { z = Math.max(1, Math.min(5, n)); img.style.width = (z * 100) + '%'; zl.textContent = z === 1 ? '全体' : z + '倍'; }
+  sel.addEventListener('change', function () { idx = Number(sel.value); show(); });
+  var panel = h('div', { class: 'dwpanel', 'aria-label': '図面を見る' },
+    h('div', { class: 'row', style: 'flex-wrap:nowrap;gap:6px' },
+      h('button', { type: 'button', class: 'small', 'aria-label': '前の図面', text: '◀', onclick: function () { idx = (idx - 1 + list.length) % list.length; show(); } }),
+      sel,
+      h('button', { type: 'button', class: 'small', 'aria-label': '次の図面', text: '▶', onclick: function () { idx = (idx + 1) % list.length; show(); } }),
+      h('button', { type: 'button', class: 'small dwhide', text: '隠す', onclick: function () { var hd = panel.classList.toggle('hide'); this.textContent = hd ? '見る' : '隠す'; } })),
+    box,
+    h('div', { class: 'row dwzoom', style: 'gap:6px;align-items:center' },
+      h('button', { type: 'button', class: 'small', 'aria-label': '縮小', text: '−', onclick: function () { zoom(z - 1); } }), zl,
+      h('button', { type: 'button', class: 'small', 'aria-label': '拡大', text: '＋', onclick: function () { zoom(z + 1); } }),
+      h('span', { style: 'flex:1' }),
+      h('button', { type: 'button', class: 'small', text: '大きく見る', onclick: function () { openFull(list[idx].id); } })));
+  show();
+  return panel;
+}
 function bulkFixtureSheet() {
-  var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '器具記号をまとめて登録' },
+  var hasDw = drawings().length > 0;
+  var form = h('div', { class: 'bulkform' });
+  var sh = h('div', { class: 'sheet bulkwide', role: 'dialog', 'aria-modal': 'true', 'aria-label': '器具記号をまとめて登録' });
+  form.append(
     h('h2', { text: '器具記号をまとめて登録' }),
     h('p', { class: 'note', text: 'Goodnotesの器具記号と種類を先に登録します。図面（姿図・器具表）の型番があれば入れてください。現地の型番は現場で確かめます。空欄の行は登録されません。' }));
   var rows = h('div', { style: 'display:flex;flex-direction:column;gap:8px' });
@@ -1963,7 +2017,7 @@ function bulkFixtureSheet() {
     }
     toast(made + '行を作りました' + (skip.length ? '（登録済み・入力済みのため飛ばした記号：' + skip.join('、') + '）' : '') + '。種類を確かめて「登録する」を押してください');
   }
-  sh.append(h('details', { class: 'card', style: 'padding:8px 10px' }, h('summary', { text: '範囲で一度に作る（A〜F、(a)〜(d) など）' }),
+  form.append(h('details', { class: 'card', style: 'padding:8px 10px' }, h('summary', { text: '範囲で一度に作る（A〜F、(a)〜(d) など）' }),
     h('div', { class: 'row', style: 'margin-top:6px' }, rg, rf, h('span', { text: '〜' }), rt),
     h('div', { class: 'row' }, rk, h('button', { type: 'button', class: 'small primary', text: '行を作る', onclick: fillRange }))));
   async function saveAll() {
@@ -1997,9 +2051,11 @@ function bulkFixtureSheet() {
     closeOverlay(); renderSurvey(); scheduleCloud(S.p.id);
     toast('器具記号を ' + fxs.length + ' 件登録しました：' + fxs.map(function (f) { return f.symbol; }).join('、'));
   }
-  sh.append(rows, h('button', { type: 'button', text: '＋ 行を追加', onclick: addRow }), err,
+  form.append(rows, h('button', { type: 'button', text: '＋ 行を追加', onclick: addRow }), err,
     h('button', { type: 'button', class: 'primary big', text: '登録する', onclick: once(saveAll) }));
-  overlay(sh);
+  // 図面があれば、上（PCの広い画面では左）に図面を出して、見ながら入れる
+  sh.append(hasDw ? h('div', { class: 'bulkgrid' }, drawingPanel(), form) : form);
+  overlay(sh, null, { noBackdrop: true });   // 入力の途中で外側を押しても消えない
 }
 function renderFixturesTab() {
   var wrap = h('div', { style: 'display:flex;flex-direction:column;gap:10px' });
