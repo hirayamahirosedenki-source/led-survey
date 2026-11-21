@@ -576,7 +576,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
 <script>
 (function () {
 'use strict';
-var APP_VER = '1.1.44';
+var APP_VER = '1.1.45';
 
 /* ====================================================================
    定数
@@ -2126,7 +2126,8 @@ function overlay(content, onClose, opts) {
     content.prepend(h('div', { class: 'sheettop' }, h('button', { type: 'button', text: '閉じる ✕', 'aria-label': '閉じる', onclick: function () { closeOverlay(); if (onClose) onClose(); } })));
   }
   ov.replaceChildren(content); ov.hidden = false; document.documentElement.classList.add('ovopen');
-  ov.onclick = function (e) { if (e.target === ov) { closeOverlay(); if (onClose) onClose(); } };
+  // 途中で閉じると困る画面（図面を1ページずつ設定する等）は、外側を押しても閉じない
+  ov.onclick = (opts && opts.noBackdrop) ? null : function (e) { if (e.target === ov) { closeOverlay(); if (onClose) onClose(); } };
 }
 function closeOverlay() { var ov = $('overlay'); ov.hidden = true; ov.replaceChildren(); ov.onclick = null; document.documentElement.classList.remove('ovopen'); }
 function ask(message, buttons) {
@@ -2419,6 +2420,7 @@ function drawingDeleteSheet() {
   }
   draw(); overlay(sh);
 }
+function unassignedDrawings() { return drawings().filter(function (d) { return !d.dwType && !d.dwDone; }).sort(function (a, b) { return (a.createdAt || 0) - (b.createdAt || 0) || (a.dwPage || 1) - (b.dwPage || 1); }); }
 function drawingSheet() {
   var lv = S.p.current.level, all = drawings(), mine = plansOf(lv);
   var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '図面' }, h('h2', { text: '図面' }));
@@ -2430,6 +2432,9 @@ function drawingSheet() {
         h('button', { type: 'button', class: 'small' + (primary ? ' primary' : ''), text: '見る', onclick: function () { openFull(d.id); } }),
         h('button', { type: 'button', class: 'small', text: '設定', onclick: function () { closeOverlay(); assignDrawing(d.id); } })));
   }
+  var un = unassignedDrawings();
+  if (un.length) sh.append(h('div', { class: 'status err' }, 'まだ設定していないページが ' + un.length + 'ページあります。',
+    h('button', { type: 'button', class: 'primary', style: 'margin-top:6px;width:100%', text: '続きから設定する（' + un.length + 'ページ）', onclick: function () { closeOverlay(); var q = un.map(function (d) { return d.id; }); assignDrawing(q[0], q); } })));
   sh.append(h('h3', { text: lvLabel(lv) + 'の平面図' }));
   if (mine.length) sh.append(h('div', { class: 'list' }, mine.map(function (d) { return item(d, true); })));
   else sh.append(h('p', { class: 'note', text: lvLabel(lv) + 'の平面図はまだありません。下で図面を入れて「平面図」と階を選ぶと、ここに出ます。' }));
@@ -2469,12 +2474,12 @@ function assignDrawing(id, queue) {
   }
   renderPick();
   async function save(goNext) {
-    var nd = Object.assign({}, d, { dwType: type, dwLevels: type === 'plan' ? lvSel.slice() : [], dwSymbols: type === 'elev' ? symSel.slice() : [], dwName: nameIn.value.trim() || d.dwName });
+    var nd = Object.assign({}, d, { dwDone: true, dwType: type, dwLevels: type === 'plan' ? lvSel.slice() : [], dwSymbols: type === 'elev' ? symSel.slice() : [], dwName: nameIn.value.trim() || d.dwName });
     try { await saveVerified([['put', 'photos', nd]]); } catch (e) { toast('保存できませんでした：' + errText(e), true); return; }
     replaceIn(S.photos, nd); touchProject();
     closeOverlay();
     if (goNext && idx >= 0 && idx < queue.length - 1) assignDrawing(queue[idx + 1], queue);
-    else { renderSurvey(); toast('図面を保存しました：' + dwLabel(nd)); }
+    else { renderSurvey(); var un = unassignedDrawings().length; toast('図面を保存しました：' + dwLabel(nd) + (un ? '（未設定があと ' + un + 'ページ。「図面」→「続きから設定する」）' : '')); }
   }
   async function del() {
     var c = await ask('この図面（' + (d.dwName || '') + '）を削除しますか？', [{ label: '削除する', value: 'y', cls: 'danger' }, { label: 'やめる', value: null }]);
@@ -2495,7 +2500,7 @@ function assignDrawing(id, queue) {
       closeOverlay(); if (!(await deleteDrawings(queue.slice(), '入れたPDF'))) assignDrawing(id, queue);
     }) }) : null,
     h('button', { type: 'button', class: 'danger', text: queue.length > 1 ? 'このページだけ削除' : 'この図面を削除', onclick: del }));
-  overlay(sh);
+  overlay(sh, function () { if (queue.length > 1) { renderSurvey(); var n = unassignedDrawings().length; if (n) toast('未設定の図面が ' + n + 'ページあります。「図面」→「続きから設定する」で続けられます'); } }, { noBackdrop: queue.length > 1 });
 }
 /* ====================================================================
    器具の記録（編集画面）
