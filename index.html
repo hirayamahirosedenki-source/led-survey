@@ -576,7 +576,7 @@ button.qtybtn { min-height: 40px; padding: 2px 10px; font-family: var(--font-mon
 <script>
 (function () {
 'use strict';
-var APP_VER = '1.1.41';
+var APP_VER = '1.1.43';
 
 /* ====================================================================
    定数
@@ -2291,10 +2291,10 @@ async function drawingFromBlob(blob) {
     return { data: await full.blob.arrayBuffer(), thumb: await th.blob.arrayBuffer(), w: full.w, h: full.h };
   } finally { URL.revokeObjectURL(li.url); }
 }
-async function saveDrawing(pr, name, page) {
+async function saveDrawing(pr, name, page, batch) {
   var now = Date.now();
   var meta = { id: uid('ph'), projectId: S.p.id, recordId: null, fixtureId: null, kind: '図面', level: '', place: '', w: pr.w, h: pr.h, size: pr.data.byteLength, thumb: pr.thumb,
-    createdAt: now, assetId: null, dwType: '', dwLevels: [], dwSymbols: [], dwName: name, dwPage: page || 1 };
+    createdAt: now, assetId: null, dwType: '', dwLevels: [], dwSymbols: [], dwName: name, dwPage: page || 1, dwBatch: batch || '' };
   await saveVerified([['put', 'photos', meta], ['put', 'photoData', { id: meta.id, projectId: S.p.id, type: 'image/jpeg', data: pr.data }]]);
   S.photos.push(meta);
   return meta;
@@ -2303,9 +2303,11 @@ async function importPdf(file) {
   var lib;
   try { lib = await loadPdfjs(); }
   catch (e) { toast('PDFを読む部品（pdf.min.mjs）が見つかりません。GitHubに上げたか確かめてください。今は図面を写真で撮って入れてください', true); return []; }
-  var made = [], name = (file.name || '図面').replace(/\.pdf$/i, '');
+  var made = [], blank = [], name = (file.name || '図面').replace(/\.pdf$/i, ''), batch = uid('dwb');
   var doc;
-  try { doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise; }
+  // スキャンした図面（JPEG2000・JBIG2）や日本語の文字を読むための部品は pdfjs フォルダに置く
+  var base = location.href.replace(/[?#].*$/, '').replace(/[^\/]*$/, '') + 'pdfjs/';
+  try { doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), wasmUrl: base + 'wasm/', cMapUrl: base + 'cmaps/', cMapPacked: true, iccUrl: base + 'iccs/', useSystemFonts: true }).promise; }
   catch (e) { toast('PDFを開けませんでした：' + errText(e), true); return []; }
   for (var i = 1; i <= doc.numPages; i++) {
     toast('図面を取り込んでいます… ' + i + ' / ' + doc.numPages + 'ページ');
@@ -2317,12 +2319,29 @@ async function importPdf(file) {
       var c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
       var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height);
       await page.render({ canvasContext: ctx, viewport: vp }).promise;
+      if (isBlankCanvas(c)) blank.push(i);
       var blob = await canvasJpeg(c, 0.85); c.width = c.height = 0;
-      made.push(await saveDrawing(await drawingFromBlob(blob), name + ' p.' + i, i));
+      made.push(await saveDrawing(await drawingFromBlob(blob), name + ' p.' + i, i, batch));
     } catch (e) { toast(i + 'ページ目を取り込めませんでした：' + errText(e), true); }
   }
   try { doc.destroy(); } catch (e) {}
+  if (blank.length) {
+    var hasParts = false;
+    try { hasParts = (await fetch(base + 'wasm/openjpeg.wasm', { method: 'HEAD', cache: 'no-cache' })).ok; } catch (e) {}
+    await ask((blank.length === doc.numPages ? '図面' : blank.join('・') + 'ページ目') + 'が白紙で取り込まれました。' +
+      (hasParts ? 'このPDFは読めない作り方の可能性があります。PDFを画面に開いてスクリーンショットを撮るか、図面を写真で撮って入れてください。'
+        : 'スキャンした図面や日本語の文字を読む部品（pdfjs フォルダ）が見つかりません。GitHub に pdfjs フォルダを上げてから、もう一度入れてください。今すぐ必要なときは、図面を写真で撮って入れてください。'),
+      [{ label: '閉じる', value: 'ok' }]);
+  }
   return made;
+}
+// 取り込んだページがほぼ真っ白か（間引いて調べる）
+function isBlankCanvas(c) {
+  try {
+    var w = c.width, hh = c.height, step = Math.max(1, Math.floor(Math.max(w, hh) / 400)), d = c.getContext('2d').getImageData(0, 0, w, hh).data, n = 0, dark = 0;
+    for (var y = 0; y < hh; y += step) for (var x = 0; x < w; x += step) { var k = (y * w + x) * 4; n++; if (d[k] + d[k + 1] + d[k + 2] < 600) dark++; }
+    return n > 0 && dark / n < 0.0003;
+  } catch (e) { return false; }
 }
 async function importDrawingFiles(files) {
   if (!files.length) return;
@@ -2339,6 +2358,56 @@ async function importDrawingFiles(files) {
   touchProject();
   toast('図面 ' + made.length + 'ページを入れました。何の図面かを選んでください');
   assignDrawing(made[0].id, made.map(function (m) { return m.id; }));
+}
+/* 図面をまとめて削除（1回の確認で） */
+async function deleteDrawings(ids, what) {
+  ids = ids.filter(function (id) { return S.photos.some(function (x) { return x.id === id; }); });
+  if (!ids.length) return false;
+  var c = await ask((what || '図面') + '（' + ids.length + 'ページ）を削除しますか？元に戻せません。', [{ label: '削除する', value: 'y', cls: 'danger' }, { label: 'やめる', value: null }]);
+  if (c !== 'y') return false;
+  var ops = []; ids.forEach(function (id) { ops.push(['del', 'photos', id]); ops.push(['del', 'photoData', id]); });
+  try { await saveVerified(ops); } catch (e) { toast('削除できませんでした：' + errText(e), true); return false; }
+  S.photos = S.photos.filter(function (x) { return ids.indexOf(x.id) < 0; }); touchProject(); renderSurvey();
+  toast('図面 ' + ids.length + 'ページを削除しました'); return true;
+}
+// 同じPDFから入れたページをまとめる（前の版で入れた図面は名前の「 p.1」などを除いた名前でまとめる）
+function dwGroupKey(d) { return d.dwBatch || ('n:' + String(d.dwName || '図面').replace(/ p\.\d+$/, '')); }
+function dwGroups() {
+  var g = {}, order = [];
+  drawings().forEach(function (d) { var k = dwGroupKey(d); if (!g[k]) { g[k] = []; order.push(k); } g[k].push(d); });
+  return order.map(function (k) { return { key: k, name: String(g[k][0].dwName || '図面').replace(/ p\.\d+$/, ''), items: g[k].sort(function (a, b) { return (a.dwPage || 1) - (b.dwPage || 1); }) }; });
+}
+function drawingDeleteSheet() {
+  var sel = {};
+  var sh = h('div', { class: 'sheet', role: 'dialog', 'aria-modal': 'true', 'aria-label': '図面を選んで削除' });
+  var btn = h('button', { type: 'button', class: 'danger big', disabled: true, text: '選んだ図面を削除', onclick: once(async function () {
+    var ids = Object.keys(sel).filter(function (k) { return sel[k]; });
+    closeOverlay(); if (!(await deleteDrawings(ids, '選んだ図面'))) drawingDeleteSheet();
+  }) });
+  function count() { var n = Object.keys(sel).filter(function (k) { return sel[k]; }).length; btn.disabled = !n; btn.textContent = n ? '選んだ図面を削除（' + n + 'ページ）' : '削除する図面を選んでください'; }
+  function draw() {
+    sh.replaceChildren(h('h2', { text: '図面を選んで削除' }), h('p', { class: 'note', text: '消したい図面にチェックを入れます。PDFごとの「全部選ぶ」で、そのPDFのページをまとめて選べます。' }));
+    dwGroups().forEach(function (g) {
+      var all = g.items.every(function (d) { return sel[d.id]; });
+      sh.append(h('div', { class: 'row', style: 'justify-content:space-between;align-items:center;margin-top:10px' },
+        h('strong', { text: g.name + (g.items.length > 1 ? '（' + g.items.length + 'ページ）' : '') }),
+        h('div', { class: 'row', style: 'gap:6px' },
+          g.items.length > 1 ? h('button', { type: 'button', class: 'small', text: all ? '選ぶのをやめる' : '全部選ぶ', onclick: function () { g.items.forEach(function (d) { sel[d.id] = !all; }); draw(); } }) : null,
+          h('button', { type: 'button', class: 'small danger', text: g.items.length > 1 ? 'このPDFを削除' : '削除', onclick: once(async function () { closeOverlay(); await deleteDrawings(g.items.map(function (d) { return d.id; }), g.name); if (drawings().length) drawingDeleteSheet(); }) }))));
+      var list = h('div', { class: 'list' });
+      g.items.forEach(function (d) {
+        var cb = h('input', { type: 'checkbox', 'aria-label': (d.dwName || '') + 'を選ぶ' }); cb.checked = !!sel[d.id];
+        cb.addEventListener('change', function () { sel[d.id] = cb.checked; draw(); });
+        list.append(h('label', { class: 'item', style: 'align-items:center' }, cb, h('span', { class: 'thumb' }, thumbImg(d)),
+          h('div', { class: 'body' }, h('span', { class: 't', text: dwLabel(d) }), h('span', { class: 's', text: d.dwName || '' }))));
+      });
+      sh.append(list);
+    });
+    if (!drawings().length) sh.append(h('p', { class: 'note', text: '図面はありません。' }));
+    sh.append(btn, h('button', { type: 'button', text: '戻る', onclick: function () { closeOverlay(); drawingSheet(); } }));
+    count();
+  }
+  draw(); overlay(sh);
 }
 function drawingSheet() {
   var lv = S.p.current.level, all = drawings(), mine = plansOf(lv);
@@ -2359,6 +2428,7 @@ function drawingSheet() {
   sh.append(h('div', { class: 'grid2' },
     h('button', { type: 'button', text: '＋ PDFを入れる', onclick: function () { closeOverlay(); $('dw-pdf').click(); } }),
     h('button', { type: 'button', text: '📷 図面を撮る', onclick: function () { closeOverlay(); $('dw-cam').click(); } })),
+    all.length ? h('button', { type: 'button', class: 'danger', text: '図面を選んで削除（PDFごとにまとめて消せます）', onclick: function () { closeOverlay(); drawingDeleteSheet(); } }) : null,
     h('p', { class: 'note', text: '図面はこのiPhoneの中とバックアップ（ZIP）にだけ保存します。社外（クラウド）には送りません。1ページ約1〜2MBです。' }),
     h('button', { type: 'button', text: '閉じる', onclick: closeOverlay }));
   overlay(sh);
@@ -2411,7 +2481,10 @@ function assignDrawing(id, queue) {
     segT, pick,
     queue.length > 1 && idx < queue.length - 1 ? h('button', { type: 'button', class: 'primary big', text: '保存して次のページへ', onclick: once(function () { return save(true); }) }) : null,
     h('button', { type: 'button', class: queue.length > 1 && idx < queue.length - 1 ? '' : 'primary big', text: queue.length > 1 && idx < queue.length - 1 ? '保存して閉じる' : '保存する', onclick: once(function () { return save(false); }) }),
-    h('button', { type: 'button', class: 'danger', text: 'この図面を削除', onclick: del }));
+    queue.length > 1 ? h('button', { type: 'button', class: 'danger', text: 'このPDFを全部取り消す（' + queue.length + 'ページ）', onclick: once(async function () {
+      closeOverlay(); if (!(await deleteDrawings(queue.slice(), '入れたPDF'))) assignDrawing(id, queue);
+    }) }) : null,
+    h('button', { type: 'button', class: 'danger', text: queue.length > 1 ? 'このページだけ削除' : 'この図面を削除', onclick: del }));
   overlay(sh);
 }
 /* ====================================================================
